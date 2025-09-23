@@ -1,6 +1,7 @@
 #ifndef __DITHER_H
 #define __DITHER_H
 
+#include "convolve.h" // convolve
 #include "error_diffusion.h" // for error diffusion constants
 #include "grayscale.h" // channel_value()
 #include "image.h" // data structure for colors
@@ -13,12 +14,13 @@ class Dither
 public:
     Dither();
     void set_palette(Palette palette);
-    size_t load(const char* file_name);
-    size_t save(const char* file_name);
+    std::size_t load(const char* file_name);
+    std::size_t save(const char* file_name);
     void grayscale(GrayscaleMethod method);
     void reduce();
     void error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate);
     void ordered(std::vector<std::vector<int>> threshold_matrix);
+    void convolution(Kernel kernel);
 
 private:
     Image image;

@@ -1,10 +1,10 @@
 #include "bayer.h"
 #include "benchmark.h"
+#include "convolve.h"
 #include "dither.h"
 #include "error_diffusion.h"
 #include "fourier2d.h"
 #include "grayscale.h"
-#include "kernel.h"
 #include "noise2d.h"
 #include "ordered.h"
 #include "palette.h"
@@ -59,9 +59,9 @@ int main()
     std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
     std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
 
-    std::cout << error_diffusion_all("golden_gate", palette_black_white, true) << std::endl;
-    std::cout << ordered_all("golden_gate", palette_black_white, true) << std::endl;
-    std::cout << convolve_all("golden_gate", true);
+    std::cout << error_diffusion_all("gray", palette_black_white, true) << std::endl;
+    std::cout << ordered_all("gray", palette_black_white, true) << std::endl;
+    std::cout << convolve_all("gray", true);
 
     std::cout << "finished" << std::endl;
     return 0;

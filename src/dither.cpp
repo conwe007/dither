@@ -17,13 +17,13 @@ void Dither::set_palette(Palette palette)
 }
 
 // loads a png at the specified file path
-size_t Dither::load(const char* file_name)
+std::size_t Dither::load(const char* file_name)
 {
     return image.load(file_name);
 }
 
 // save a png to the specified file path
-size_t Dither::save(const char* file_name)
+std::size_t Dither::save(const char* file_name)
 {
     return image.save(file_name);
 }
@@ -31,12 +31,12 @@ size_t Dither::save(const char* file_name)
 // converts image to grayscale using specified method
 void Dither::grayscale(GrayscaleMethod method)
 {
-    size_t height = image.get_height();
-    size_t width = image.get_width();
+    std::size_t height = image.get_height();
+    std::size_t width = image.get_width();
     
-    for(size_t y = 0; y < height; y++)
+    for(std::size_t y = 0; y < height; y++)
     {
-        for(size_t x = 0; x < width; x++)
+        for(std::size_t x = 0; x < width; x++)
         {
             Color color = image.get_pixel(x, y);
             int16_t channel_value = Grayscale::channel_value(color, method);
@@ -51,12 +51,12 @@ void Dither::grayscale(GrayscaleMethod method)
 // changes each pixel in the image to the closest color in the palette
 void Dither::reduce()
 {
-    size_t height = image.get_height();
-    size_t width = image.get_width();
+    std::size_t height = image.get_height();
+    std::size_t width = image.get_width();
     
-    for(size_t y = 0; y < height; y++)
+    for(std::size_t y = 0; y < height; y++)
     {
-        for(size_t x = 0; x < width; x++)
+        for(std::size_t x = 0; x < width; x++)
         {
             Color color = image.get_pixel(x, y);
             Color palette_nearest = palette.nearest(color);
@@ -86,10 +86,10 @@ void Dither::error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate)
 // reduces the image to the colors in the palette and dithers against the specified threshold matrix
 void Dither::ordered(std::vector<std::vector<int>> threshold_matrix)
 {
-    size_t image_height = image.get_height();
-    size_t image_width = image.get_width();
-    size_t threshold_matrix_height = threshold_matrix.size();
-    size_t threshold_matrix_width = threshold_matrix[0].size();
+    std::size_t image_height = image.get_height();
+    std::size_t image_width = image.get_width();
+    std::size_t threshold_matrix_height = threshold_matrix.size();
+    std::size_t threshold_matrix_width = threshold_matrix[0].size();
 
     palette.sort();
 
@@ -101,9 +101,9 @@ void Dither::ordered(std::vector<std::vector<int>> threshold_matrix)
     Color threshold_color_offset;
     Color palette_nearest;
 
-    for(size_t y = 0; y < image_height; y++)
+    for(std::size_t y = 0; y < image_height; y++)
     {
-        for(size_t x = 0; x < image_width; x++)
+        for(std::size_t x = 0; x < image_width; x++)
         {
             color = image.get_pixel(x, y);
             threshold_value = threshold_matrix[y % threshold_matrix_height][x % threshold_matrix_width];
@@ -123,18 +123,29 @@ void Dither::ordered(std::vector<std::vector<int>> threshold_matrix)
     return;
 }
 
+// convolves the image against the specified kernel
+void Dither::convolution(Kernel kernel)
+{
+    std::size_t image_height = image.get_height();
+    std::size_t image_width = image.get_width();
+
+
+
+    return;
+}
+
 // dithers using specified algorithm, does not alternate direction on odd rows
 void Dither::error_diffusion_standard(ErrorDiffusionAlgorithm algorithm)
 {
     // initialize error diffusion containers
     ErrorDiffusion error_diffusion = ErrorDiffusion(algorithm);
     std::vector<std::vector<std::vector<int>>> error_matrix(image.get_height(), std::vector<std::vector<int>>(image.get_width(), std::vector<int>(3, 0)));
-    size_t height = image.get_height();
-    size_t width = image.get_width();
+    std::size_t height = image.get_height();
+    std::size_t width = image.get_width();
     
-    for(size_t y = 0; y < height; y++)
+    for(std::size_t y = 0; y < height; y++)
     {
-        for(size_t x = 0; x < width; x++)
+        for(std::size_t x = 0; x < width; x++)
         {
             // set current pixel to nearest palette color (accounting for accumulated error)
             Color color = image.get_pixel(x, y);
@@ -145,10 +156,10 @@ void Dither::error_diffusion_standard(ErrorDiffusionAlgorithm algorithm)
 
             std::vector<int> current_pixel_error = {color.r - palette_nearest.r, color.g - palette_nearest.g, color.b - palette_nearest.b};
 
-            for(size_t index_error = 0; index_error < error_diffusion.coordinates.size(); index_error++)
+            for(std::size_t index_error = 0; index_error < error_diffusion.coordinates.size(); index_error++)
             {
-                size_t new_x = x + error_diffusion.coordinates[index_error].first;
-                size_t new_y = y + error_diffusion.coordinates[index_error].second;
+                std::size_t new_x = x + error_diffusion.coordinates[index_error].first;
+                std::size_t new_y = y + error_diffusion.coordinates[index_error].second;
 
                 if(new_x < 0 || new_x >= width || new_y < 0 || new_y >= height)
                 {
@@ -173,10 +184,10 @@ void Dither::error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm)
     // initialize error diffusion containers
     ErrorDiffusion error_diffusion = ErrorDiffusion(algorithm);
     std::vector<std::vector<std::vector<int>>> error_matrix(image.get_height(), std::vector<std::vector<int>>(image.get_width(), std::vector<int>(Color::NUM_BYTES_COLOR - 1, 0))); // RGB values (no A)
-    size_t height = image.get_height();
-    size_t width = image.get_width();
+    std::size_t height = image.get_height();
+    std::size_t width = image.get_width();
 
-    for(size_t y = 0; y < height; y++)
+    for(std::size_t y = 0; y < height; y++)
     {
         // alternate direction on odd rows
         if(y % 2 == 1)
@@ -192,10 +203,10 @@ void Dither::error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm)
 
                 std::vector<int> current_pixel_error = {color.r - palette_nearest.r, color.g - palette_nearest.g, color.b - palette_nearest.b};
 
-                for(size_t index_error = 0; index_error < error_diffusion.coordinates.size(); index_error++)
+                for(std::size_t index_error = 0; index_error < error_diffusion.coordinates.size(); index_error++)
                 {
-                    size_t new_x = x - error_diffusion.coordinates[index_error].first; // flip x when we are going backwards
-                    size_t new_y = y + error_diffusion.coordinates[index_error].second;
+                    std::size_t new_x = x - error_diffusion.coordinates[index_error].first; // flip x when we are going backwards
+                    std::size_t new_y = y + error_diffusion.coordinates[index_error].second;
 
                     if(new_x < 0 || new_x >= width || new_y < 0 || new_y >= height)
                     {
@@ -212,7 +223,7 @@ void Dither::error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm)
         }
         else
         {
-            for(size_t x = 0; x < width; x++)
+            for(std::size_t x = 0; x < width; x++)
             {
                 // set current pixel to nearest palette color (accounting for accumulated error)
                 Color color = image.get_pixel(x, y);
@@ -223,10 +234,10 @@ void Dither::error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm)
 
                 std::vector<int> current_pixel_error = {color.r - palette_nearest.r, color.g - palette_nearest.g, color.b - palette_nearest.b};
 
-                for(size_t index_error = 0; index_error < error_diffusion.coordinates.size(); index_error++)
+                for(std::size_t index_error = 0; index_error < error_diffusion.coordinates.size(); index_error++)
                 {
-                    size_t new_x = x + error_diffusion.coordinates[index_error].first;
-                    size_t new_y = y + error_diffusion.coordinates[index_error].second;
+                    std::size_t new_x = x + error_diffusion.coordinates[index_error].first;
+                    std::size_t new_y = y + error_diffusion.coordinates[index_error].second;
 
                     if(new_x < 0 || new_x >= width || new_y < 0 || new_y >= height)
                     {
@@ -249,15 +260,15 @@ void Dither::error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm)
 // maps the values in the specified threshold matrix to the range 0.0-1.0
 std::vector<std::vector<double>> Dither::normalize_threshold_matrix(std::vector<std::vector<int>> threshold_matrix)
 {
-    size_t height = threshold_matrix.size();
-    size_t width = threshold_matrix[0].size();
+    std::size_t height = threshold_matrix.size();
+    std::size_t width = threshold_matrix[0].size();
     std::vector<std::vector<double>> threshold_matrix_normalized = std::vector<std::vector<double>>(height, std::vector<double>(width, 0.0));
     int threshold_matrix_min = INT_MAX;
     int threshold_matrix_max = INT_MIN;
     
-    for(size_t y = 0; y < height; y++)
+    for(std::size_t y = 0; y < height; y++)
     {
-        for(size_t x = 0; x < width; x++)
+        for(std::size_t x = 0; x < width; x++)
         {
             threshold_matrix_min = std::min(threshold_matrix_min, threshold_matrix[y][x]);
             threshold_matrix_max = std::max(threshold_matrix_max, threshold_matrix[y][x]);
@@ -266,9 +277,9 @@ std::vector<std::vector<double>> Dither::normalize_threshold_matrix(std::vector<
 
     double threshold_matrix_range = static_cast<double>(threshold_matrix_max) - static_cast<double>(threshold_matrix_min);
 
-    for(size_t y = 0; y < height; y++)
+    for(std::size_t y = 0; y < height; y++)
     {
-        for(size_t x = 0; x < width; x++)
+        for(std::size_t x = 0; x < width; x++)
         {
             threshold_matrix_normalized[y][x] = static_cast<double>(threshold_matrix[y][x]) / threshold_matrix_range;
         }
@@ -280,15 +291,15 @@ std::vector<std::vector<double>> Dither::normalize_threshold_matrix(std::vector<
 // maps the values in the specified threshold matrix to the specified range
 std::vector<std::vector<int>> Dither::scale_threshold_matrix(std::vector<std::vector<int>> threshold_matrix, int min, int max)
 {
-    size_t height = threshold_matrix.size();
-    size_t width = threshold_matrix[0].size();
+    std::size_t height = threshold_matrix.size();
+    std::size_t width = threshold_matrix[0].size();
     std::vector<std::vector<int>> threshold_matrix_scaled = std::vector<std::vector<int>>(height, std::vector<int>(width, 0.0));
     int threshold_matrix_min = INT_MAX;
     int threshold_matrix_max = INT_MIN;
     
-    for(size_t y = 0; y < height; y++)
+    for(std::size_t y = 0; y < height; y++)
     {
-        for(size_t x = 0; x < width; x++)
+        for(std::size_t x = 0; x < width; x++)
         {
             threshold_matrix_min = std::min(threshold_matrix_min, threshold_matrix[y][x]);
             threshold_matrix_max = std::max(threshold_matrix_max, threshold_matrix[y][x]);
@@ -298,9 +309,9 @@ std::vector<std::vector<int>> Dither::scale_threshold_matrix(std::vector<std::ve
     int threshold_matrix_range = threshold_matrix_max - threshold_matrix_min;
     int new_range = max - min;
 
-    for(size_t y = 0; y < height; y++)
+    for(std::size_t y = 0; y < height; y++)
     {
-        for(size_t x = 0; x < width; x++)
+        for(std::size_t x = 0; x < width; x++)
         {
             threshold_matrix_scaled[y][x] = (threshold_matrix[y][x] - threshold_matrix_min) * new_range / threshold_matrix_range;
         }
