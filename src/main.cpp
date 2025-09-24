@@ -26,11 +26,11 @@ std::string error_diffusion_all(std::string file_name, Palette palette, bool ben
 std::string ordered(std::string file_name, Palette palette, ThresholdMatrix threshold_matrix_type, bool benchmark);
 std::string ordered_all(std::string file_name, Palette palette, bool benchmark);
 
-std::string convolution(std::string file_name, Kernel kernel_type, bool benchmark);
-std::string convolution_all(std::string file_name, bool benchmark);
+std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, bool benchmark);
+std::string convolution_all(std::string file_name, EdgeHandling edge_handling, bool benchmark);
 
-std::string convolve_image(std::string file_name, Kernel kernel_type, bool benchmark);
-std::string convolve_all(std::string file_name, bool benchmark);
+std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool fourier, bool benchmark);
+std::string convolve_dither_all(std::string file_name, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool fourier, bool benchmark);
 
 std::string generate_bayer(int size, int output_levels, bool fourier, bool benchmark);
 std::string generate_bayer_all(int output_levels, bool fourier, bool benchmark);
@@ -62,10 +62,10 @@ int main()
     // std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
     // std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
 
-    // std::cout << error_diffusion_all("mona_lisa", palette_black_white, true) << std::endl;
-    // std::cout << ordered_all("mona_lisa", palette_black_white, true) << std::endl;
-    std::cout << convolution_all("mona_lisa", true) << std::endl;
-    std::cout << convolve_all("mona_lisa", true);
+    std::cout << error_diffusion_all("golden_gate", palette_titanstone, true) << std::endl;
+    // std::cout << ordered_all("forest", palette_twilight5, true) << std::endl;
+    std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true) << std::endl;
+    std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_titanstone, ErrorDiffusionAlgorithm::ATKINSON, false, true, true) << std::endl;
 
     std::cout << "finished" << std::endl;
     return 0;
@@ -245,7 +245,7 @@ std::string ordered_all(std::string file_name, Palette palette, bool benchmark)
     return output;
 }
 
-std::string convolution(std::string file_name, Kernel kernel_type, bool benchmark)
+std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, bool benchmark)
 {
     std::string output = "";
     Benchmark bm = Benchmark();
@@ -264,7 +264,7 @@ std::string convolution(std::string file_name, Kernel kernel_type, bool benchmar
         bm.start();
     }
 
-    dither.convolution(kernel_type);
+    dither.convolution(kernel_type, edge_handling);
 
     if(benchmark)
     {
@@ -277,59 +277,33 @@ std::string convolution(std::string file_name, Kernel kernel_type, bool benchmar
     return output;
 }
 
-std::string convolution_all(std::string file_name, bool benchmark)
+std::string convolution_all(std::string file_name, EdgeHandling edge_handling, bool benchmark)
 {
     std::string output = "Convolution:\n";
 
-    output += convolution(file_name, Kernel::RIDGE_4, benchmark);
-    output += convolution(file_name, Kernel::RIDGE_8, benchmark);
-    output += convolution(file_name, Kernel::SHARPEN_4, benchmark);
-    output += convolution(file_name, Kernel::SHARPEN_8, benchmark);
-    output += convolution(file_name, Kernel::BOX_BLUR, benchmark);
-    output += convolution(file_name, Kernel::GAUSSIAN_BLUR, benchmark);
-    output += convolution(file_name, Kernel::UNSHARP_MASK, benchmark);
+    output += convolution(file_name, Kernel::RIDGE_4, edge_handling, benchmark);
+    output += convolution(file_name, Kernel::RIDGE_8, edge_handling, benchmark);
+    output += convolution(file_name, Kernel::SHARPEN_4, edge_handling, benchmark);
+    output += convolution(file_name, Kernel::SHARPEN_8, edge_handling, benchmark);
+    output += convolution(file_name, Kernel::BOX_BLUR, edge_handling, benchmark);
+    output += convolution(file_name, Kernel::GAUSSIAN_BLUR, edge_handling, benchmark);
+    output += convolution(file_name, Kernel::UNSHARP_MASK, edge_handling, benchmark);
     
     return output;
 }
 
-std::string convolve_image(std::string file_name, Kernel kernel_type, bool benchmark)
+std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool fourier, bool benchmark)
 {
     std::string output = "";
     Benchmark bm = Benchmark();
     std::string file_path_suffix = ".png";
-    std::string file_path_input = "input\\" + file_name;
-    std::string file_path_output = "output\\convolve\\" + file_name;
-    Image image = Image();
-    std::vector<std::vector<double>> kernel;
-    std::vector<std::vector<int>> convolved_image;
-    std::vector<std::vector<int>> image_matrix = load_matrix_from_png(file_path_input + file_path_suffix);
+    std::string file_path_input = "input\\" + file_name + file_path_suffix;
+    std::string file_path_output = "output\\convolve_dither\\" + file_name;
+    Dither dither = Dither();
+    std::size_t output_levels = Color::CHANNEL_MAX + 1;
 
-    switch(kernel_type)
-    {
-    case Kernel::RIDGE_4:
-        kernel = KERNEL_RIDGE_4;
-        break;
-    case Kernel::RIDGE_8:
-        kernel = KERNEL_RIDGE_8;
-        break;
-    case Kernel::SHARPEN_4:
-        kernel = KERNEL_SHARPEN_4;
-        break;
-    case Kernel::SHARPEN_8:
-        kernel = KERNEL_SHARPEN_8;
-        break;
-    case Kernel::BOX_BLUR:
-        kernel = KERNEL_BOX_BLUR;
-        break;
-    case Kernel::GAUSSIAN_BLUR:
-        kernel = KERNEL_GAUSSIAN_BLUR;
-        break;
-    case Kernel::UNSHARP_MASK:
-        kernel = KERNEL_UNSHARP_MASK;
-        break;
-    default:
-        break;
-    }
+    dither.set_palette(palette);
+    dither.load(file_path_input.c_str());
 
     if(benchmark)
     {
@@ -339,7 +313,8 @@ std::string convolve_image(std::string file_name, Kernel kernel_type, bool bench
         bm.start();
     }
 
-    convolved_image = convolve<int, double>(image_matrix, kernel);
+    dither.convolution(kernel_type, edge_handling);
+    dither.error_diffusion(algorithm, alternate);
 
     if(benchmark)
     {
@@ -347,24 +322,51 @@ std::string convolve_image(std::string file_name, Kernel kernel_type, bool bench
         output += std::to_string(bm.time_us()) + " us\n";;
     }
 
-    image.create_from_matrix(convolved_image);
-    image.save((file_path_output + "_" + KERNEL_STRING.at(kernel_type) + file_path_suffix).c_str());
+    dither.save((file_path_output + "_" + KERNEL_STRING.at(kernel_type) + "_" + ErrorDiffusion::ALGORITHM_STRING.at(algorithm) + file_path_suffix).c_str());
+
+    if(fourier)
+    {
+        Image image = Image();
+
+        if(benchmark)
+        {
+            char heading[100];
+            sprintf(heading, "%s fourier time: ", KERNEL_STRING.at(kernel_type).c_str());
+            output += heading;
+            bm.start();
+        }
+
+        Fourier2D<int> fourier_2d = Fourier2D<int>(dither.get_matrix(), true, true);
+        fourier_2d.dft();
+        fourier_2d.normalize_transform(output_levels);
+
+        if(benchmark)
+        {
+            bm.stop();
+            output += std::to_string(bm.time_us()) + " us\n";;
+        }
+
+        char file_name[1000];
+        sprintf(file_name, "%s_%s_fourier.png", file_path_output.c_str(), KERNEL_STRING.at(kernel_type).c_str());
+        image.create_from_matrix(fourier_2d.get_transform());
+        image.save(file_name);
+    }
 
     return output;
 }
 
-std::string convolve_all(std::string file_name, bool benchmark)
+std::string convolve_dither_all(std::string file_name, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool fourier, bool benchmark)
 {
-    std::string output = "Convolve:\n";
+    std::string output = "Convolve Dither:\n";
 
-    output += convolve_image(file_name, Kernel::RIDGE_4, benchmark);
-    output += convolve_image(file_name, Kernel::RIDGE_8, benchmark);
-    output += convolve_image(file_name, Kernel::SHARPEN_4, benchmark);
-    output += convolve_image(file_name, Kernel::SHARPEN_8, benchmark);
-    output += convolve_image(file_name, Kernel::BOX_BLUR, benchmark);
-    output += convolve_image(file_name, Kernel::GAUSSIAN_BLUR, benchmark);
-    output += convolve_image(file_name, Kernel::UNSHARP_MASK, benchmark);
-
+    output += convolve_dither(file_name, Kernel::RIDGE_4, edge_handling, palette, algorithm, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::RIDGE_8, edge_handling, palette, algorithm, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::SHARPEN_4, edge_handling, palette, algorithm, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::SHARPEN_8, edge_handling, palette, algorithm, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::BOX_BLUR, edge_handling, palette, algorithm, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::GAUSSIAN_BLUR, edge_handling, palette, algorithm, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::UNSHARP_MASK, edge_handling, palette, algorithm, alternate, fourier, benchmark);
+    
     return output;
 }
 

@@ -13,6 +13,7 @@ class Dither
 {
 public:
     Dither();
+    std::vector<std::vector<int>> get_matrix();
     void set_palette(Palette palette);
     std::size_t load(const char* file_name);
     std::size_t save(const char* file_name);

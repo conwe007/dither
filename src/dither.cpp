@@ -9,6 +9,12 @@ Dither::Dither()
     return;
 }
 
+// returns the matrix of grayscale pixel values being dithered
+std::vector<std::vector<int>> Dither::get_matrix()
+{
+    return image.get_matrix_from_image();
+}
+
 // sets the palette
 void Dither::set_palette(Palette palette)
 {
@@ -145,6 +151,25 @@ void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
             image_matrix_g = std::vector<std::vector<int>>(image_height + 2 * kernel_height_half, std::vector<int>(image_width + 2 * kernel_width_half, 0));
             image_matrix_b = std::vector<std::vector<int>>(image_height + 2 * kernel_height_half, std::vector<int>(image_width + 2 * kernel_width_half, 0));
 
+            for(std::size_t x = 0; x < image_width; x++)
+            {
+                for(std::size_t y = -kernel_height_half; y < 0; y++)
+                {
+                    color = image.get_pixel(x, 0);
+                    image_matrix_r[y][x + kernel_width_half] = color.r;
+                    image_matrix_g[y][x + kernel_width_half] = color.g;
+                    image_matrix_b[y][x + kernel_width_half] = color.b;
+                }
+
+                for(std::size_t y = image_height; y < image_height + kernel_height_half; y++)
+                {
+                    color = image.get_pixel(x, image_height - 1);
+                    image_matrix_r[y][x + kernel_width_half] = color.r;
+                    image_matrix_g[y][x + kernel_width_half] = color.g;
+                    image_matrix_b[y][x + kernel_width_half] = color.b;
+                }
+            }
+
             for(std::size_t y = 0; y < image_height; y++)
             {
                 for(std::size_t x = -kernel_width_half; x < 0; x++)
@@ -165,7 +190,7 @@ void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
 
                 for(std::size_t x = image_width; x < image_width + kernel_width_half; x++)
                 {
-                    color = image.get_pixel(0, y);
+                    color = image.get_pixel(image_width - 1, y);
                     image_matrix_r[y + kernel_height_half][x] = color.r;
                     image_matrix_g[y + kernel_height_half][x] = color.g;
                     image_matrix_b[y + kernel_height_half][x] = color.b;
