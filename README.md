@@ -5,6 +5,12 @@ This library provides functions to dither png images or generate various noise i
 ## Usage
 
 
+## CLI
+```dither [options]```
+| flag | description |
+| --- | --- |
+| --help | displays help |
+
 
 ## To Compile
 Requirements: GNU C++ compiler, make<br />

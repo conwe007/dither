@@ -28,7 +28,7 @@ $(ODIR)/%.o : $(SDIR)/%.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 # rule to make all objects and build the result as main.exe
-main : $(OBJ)
+dither : $(OBJ)
 	$(CC) -o $(BDIR)/$@ $^ $(CFLAGS) $(LIBS)
 
 .PHONY : clean
