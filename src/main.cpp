@@ -26,6 +26,9 @@ std::string error_diffusion_all(std::string file_name, Palette palette, bool ben
 std::string ordered(std::string file_name, Palette palette, ThresholdMatrix threshold_matrix_type, bool benchmark);
 std::string ordered_all(std::string file_name, Palette palette, bool benchmark);
 
+std::string convolution(std::string file_name, Kernel kernel_type, bool benchmark);
+std::string convolution_all(std::string file_name, bool benchmark);
+
 std::string convolve_image(std::string file_name, Kernel kernel_type, bool benchmark);
 std::string convolve_all(std::string file_name, bool benchmark);
 
@@ -50,18 +53,19 @@ int main()
 
     int output_levels = Color::CHANNEL_MAX + 1;
     double sigma_blue_noise = 1.9;
-    double leaky_integrator = 0.5;
+    double leaky_integrator = 1.0;
     size_t kernel_size = 3;
     double sigma_brown_noise = 1.0;
     
-    std::cout << generate_bayer_all(output_levels, true, true) << std::endl;
-    std::cout << generate_blue_noise_all(sigma_blue_noise, output_levels, true, true) << std::endl;
-    std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
-    std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
+    // std::cout << generate_bayer_all(output_levels, true, true) << std::endl;
+    // std::cout << generate_blue_noise_all(sigma_blue_noise, output_levels, true, true) << std::endl;
+    // std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
+    // std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
 
-    std::cout << error_diffusion_all("gray", palette_black_white, true) << std::endl;
-    std::cout << ordered_all("gray", palette_black_white, true) << std::endl;
-    std::cout << convolve_all("gray", true);
+    // std::cout << error_diffusion_all("mona_lisa", palette_black_white, true) << std::endl;
+    // std::cout << ordered_all("mona_lisa", palette_black_white, true) << std::endl;
+    std::cout << convolution_all("mona_lisa", true) << std::endl;
+    std::cout << convolve_all("mona_lisa", true);
 
     std::cout << "finished" << std::endl;
     return 0;
@@ -241,6 +245,53 @@ std::string ordered_all(std::string file_name, Palette palette, bool benchmark)
     return output;
 }
 
+std::string convolution(std::string file_name, Kernel kernel_type, bool benchmark)
+{
+    std::string output = "";
+    Benchmark bm = Benchmark();
+    std::string file_path_input = "input\\" + file_name + ".png";
+    std::string file_path_output = "output\\convolution\\" + file_name;
+    std::string file_path_suffix = "";
+    Dither dither = Dither();
+
+    dither.load(file_path_input.c_str());
+
+    if(benchmark)
+    {
+        char heading[100];
+        sprintf(heading, "%s time: ", KERNEL_STRING.at(kernel_type).c_str());
+        output += heading;
+        bm.start();
+    }
+
+    dither.convolution(kernel_type);
+
+    if(benchmark)
+    {
+        bm.stop();
+        output += std::to_string(bm.time_us()) + " us\n";;
+    }
+
+    dither.save((file_path_output + "_" + KERNEL_STRING.at(kernel_type) + ".png").c_str());
+
+    return output;
+}
+
+std::string convolution_all(std::string file_name, bool benchmark)
+{
+    std::string output = "Convolution:\n";
+
+    output += convolution(file_name, Kernel::RIDGE_4, benchmark);
+    output += convolution(file_name, Kernel::RIDGE_8, benchmark);
+    output += convolution(file_name, Kernel::SHARPEN_4, benchmark);
+    output += convolution(file_name, Kernel::SHARPEN_8, benchmark);
+    output += convolution(file_name, Kernel::BOX_BLUR, benchmark);
+    output += convolution(file_name, Kernel::GAUSSIAN_BLUR, benchmark);
+    output += convolution(file_name, Kernel::UNSHARP_MASK, benchmark);
+    
+    return output;
+}
+
 std::string convolve_image(std::string file_name, Kernel kernel_type, bool benchmark)
 {
     std::string output = "";
@@ -288,7 +339,7 @@ std::string convolve_image(std::string file_name, Kernel kernel_type, bool bench
         bm.start();
     }
 
-    convolved_image = convolve<int, double>(image_matrix, kernel, 1.0);
+    convolved_image = convolve<int, double>(image_matrix, kernel);
 
     if(benchmark)
     {

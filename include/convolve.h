@@ -8,7 +8,7 @@
 #include <vector>
 
 template <typename T, typename K>
-std::vector<std::vector<T>> convolve(std::vector<std::vector<T>> matrix, std::vector<std::vector<K>> kernel, double leaky_integrator);
+std::vector<std::vector<T>> convolve(std::vector<std::vector<T>> matrix, std::vector<std::vector<K>> kernel);
 
 template <typename T>
 std::vector<std::vector<T>> gaussian_kernel(std::size_t size, double sigma);
@@ -24,14 +24,10 @@ enum Kernel
     UNSHARP_MASK
 };
 
-static const std::unordered_map<Kernel, std::vector<std::vector<double>>, EnumHash> KERNEL_VALUES = {
-    {Kernel::RIDGE_4, KERNEL_RIDGE_4},
-    {Kernel::RIDGE_8, KERNEL_RIDGE_8},
-    {Kernel::SHARPEN_4, KERNEL_SHARPEN_4},
-    {Kernel::SHARPEN_8, KERNEL_SHARPEN_8},
-    {Kernel::BOX_BLUR, KERNEL_BOX_BLUR},
-    {Kernel::GAUSSIAN_BLUR, KERNEL_GAUSSIAN_BLUR},
-    {Kernel::UNSHARP_MASK, KERNEL_UNSHARP_MASK}
+enum EdgeHandling
+{
+    EXTEND,
+    WRAP
 };
 
 static const std::unordered_map<Kernel, std::string, EnumHash> KERNEL_STRING = {
@@ -90,8 +86,18 @@ const std::vector<std::vector<double>> KERNEL_UNSHARP_MASK = {
     {-0.00296902, -0.0133062, -0.0219382, -0.0133062, -0.00296902}
 };
 
+static const std::unordered_map<Kernel, std::vector<std::vector<double>>, EnumHash> KERNEL_VALUES = {
+    {Kernel::RIDGE_4, KERNEL_RIDGE_4},
+    {Kernel::RIDGE_8, KERNEL_RIDGE_8},
+    {Kernel::SHARPEN_4, KERNEL_SHARPEN_4},
+    {Kernel::SHARPEN_8, KERNEL_SHARPEN_8},
+    {Kernel::BOX_BLUR, KERNEL_BOX_BLUR},
+    {Kernel::GAUSSIAN_BLUR, KERNEL_GAUSSIAN_BLUR},
+    {Kernel::UNSHARP_MASK, KERNEL_UNSHARP_MASK}
+};
+
 template <typename T, typename K>
-std::vector<std::vector<T>> convolve(std::vector<std::vector<T>> matrix, std::vector<std::vector<K>> kernel, double leaky_integrator)
+std::vector<std::vector<T>> convolve(std::vector<std::vector<T>> matrix, std::vector<std::vector<K>> kernel)
 {
     const std::size_t matrix_height = matrix.size();
     const std::size_t matrix_width = matrix[0].size();
@@ -114,7 +120,7 @@ std::vector<std::vector<T>> convolve(std::vector<std::vector<T>> matrix, std::ve
                 {
                     std::size_t dy = (matrix_height + ((my + ky - kernel_height_half) % matrix_height)) % matrix_height;
                     std::size_t dx = (matrix_width + ((mx + kx - kernel_width_half) % matrix_width)) % matrix_width;
-                    sum += static_cast<double>(matrix[dy][dx]) * static_cast<double>(kernel[ky][kx]) * leaky_integrator;
+                    sum += static_cast<double>(matrix[dy][dx]) * static_cast<double>(kernel[ky][kx]);
                 }
             }
             

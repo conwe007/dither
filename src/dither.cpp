@@ -124,12 +124,92 @@ void Dither::ordered(std::vector<std::vector<int>> threshold_matrix)
 }
 
 // convolves the image against the specified kernel
-void Dither::convolution(Kernel kernel)
+void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
 {
     std::size_t image_height = image.get_height();
     std::size_t image_width = image.get_width();
+    std::vector<std::vector<double>> kernel = KERNEL_VALUES.at(kernel_type);
+    std::size_t kernel_height = kernel.size();
+    std::size_t kernel_width = kernel[0].size();
+    std::size_t kernel_height_half = kernel_height / 2;
+    std::size_t kernel_width_half = kernel_width / 2;
+    Color color;
+    std::vector<std::vector<int>> image_matrix_r;
+    std::vector<std::vector<int>> image_matrix_g;
+    std::vector<std::vector<int>> image_matrix_b;
 
+    switch(edge_handling)
+    {
+        case EdgeHandling::EXTEND:
+            image_matrix_r = std::vector<std::vector<int>>(image_height + 2 * kernel_height_half, std::vector<int>(image_width + 2 * kernel_width_half, 0));
+            image_matrix_g = std::vector<std::vector<int>>(image_height + 2 * kernel_height_half, std::vector<int>(image_width + 2 * kernel_width_half, 0));
+            image_matrix_b = std::vector<std::vector<int>>(image_height + 2 * kernel_height_half, std::vector<int>(image_width + 2 * kernel_width_half, 0));
 
+            for(std::size_t y = 0; y < image_height; y++)
+            {
+                for(std::size_t x = -kernel_width_half; x < 0; x++)
+                {
+                    color = image.get_pixel(0, y);
+                    image_matrix_r[y + kernel_height_half][x] = color.r;
+                    image_matrix_g[y + kernel_height_half][x] = color.g;
+                    image_matrix_b[y + kernel_height_half][x] = color.b;
+                }
+
+                for(std::size_t x = 0; x < image_width; x++)
+                {
+                    color = image.get_pixel(x, y);
+                    image_matrix_r[y + kernel_height_half][x + kernel_width_half] = color.r;
+                    image_matrix_g[y + kernel_height_half][x + kernel_width_half] = color.g;
+                    image_matrix_b[y + kernel_height_half][x + kernel_width_half] = color.b;
+                }
+
+                for(std::size_t x = image_width; x < image_width + kernel_width_half; x++)
+                {
+                    color = image.get_pixel(0, y);
+                    image_matrix_r[y + kernel_height_half][x] = color.r;
+                    image_matrix_g[y + kernel_height_half][x] = color.g;
+                    image_matrix_b[y + kernel_height_half][x] = color.b;
+                }
+            }
+            
+            break;
+
+        case EdgeHandling::WRAP:
+            image_matrix_r = std::vector<std::vector<int>>(image_height, std::vector<int>(image_width, 0));
+            image_matrix_g = std::vector<std::vector<int>>(image_height, std::vector<int>(image_width, 0));
+            image_matrix_b = std::vector<std::vector<int>>(image_height, std::vector<int>(image_width, 0));
+
+            for(std::size_t y = 0; y < image_height; y++)
+            {
+                for(std::size_t x = 0; x < image_width; x++)
+                {
+                    color = image.get_pixel(x, y);
+                    image_matrix_r[y][x] = color.r;
+                    image_matrix_g[y][x] = color.g;
+                    image_matrix_b[y][x] = color.b;
+                }
+            }
+
+            break;
+    }
+
+    
+
+    std::vector<std::vector<int>> image_matrix_r_convolved = convolve<int, double>(image_matrix_r, kernel);
+    std::vector<std::vector<int>> image_matrix_g_convolved = convolve<int, double>(image_matrix_g, kernel);
+    std::vector<std::vector<int>> image_matrix_b_convolved = convolve<int, double>(image_matrix_b, kernel);
+
+    for(std::size_t y = 0; y < image_height; y++)
+    {
+        for(std::size_t x = 0; x < image_width; x++)
+        {
+            image_matrix_r_convolved[y][x] = std::clamp(image_matrix_r_convolved[y][x], 0, Color::CHANNEL_MAX);
+            image_matrix_g_convolved[y][x] = std::clamp(image_matrix_g_convolved[y][x], 0, Color::CHANNEL_MAX);
+            image_matrix_b_convolved[y][x] = std::clamp(image_matrix_b_convolved[y][x], 0, Color::CHANNEL_MAX);
+            color = Color(image_matrix_r_convolved[y][x], image_matrix_g_convolved[y][x], image_matrix_b_convolved[y][x], Color::CHANNEL_MAX);
+            image.set_pixel(color, x, y);
+        }
+    }
 
     return;
 }

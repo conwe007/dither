@@ -20,7 +20,7 @@ public:
     void reduce();
     void error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate);
     void ordered(std::vector<std::vector<int>> threshold_matrix);
-    void convolution(Kernel kernel);
+    void convolution(Kernel kernel_type, EdgeHandling edge_handling);
 
 private:
     Image image;
