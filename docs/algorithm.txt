@@ -3,3 +3,17 @@ Algorithm:
     a. iterate through image and store each pixels gradient, ie. the abs difference between it and the average of its neighbors
 2. order contrast map from highest contrast to lowest contrast
 3. iterate through contrast map and dither each pixel, diffusing error to undithered neighbors (highest contrast first)
+
+CLI flow:
+string input_file_name -> Image image
+-a: bool gamma_correction = true
+-g: bool grayscale = true, grayscale_method = GRAYSCALE_METHOD, Image image -> apply grayscale
+-c: 
+-r: 
+-e: 
+-d: 
+-b: 
+
+
+
+Image image -> string output_file_name

@@ -1,7 +1,7 @@
 #include "bayer.h"
 #include "benchmark.h"
+#include "cli.h"
 #include "convolve.h"
-#include "cxxopts.hpp"
 #include "dither.h"
 #include "error_diffusion.h"
 #include "fourier2d.h"
@@ -43,7 +43,7 @@ std::string generate_brown_noise_all(double leaky_integrator, std::size_t kernel
 std::string generate_white_noise(int width, int height, int output_levels, bool fourier, bool benchmark);
 std::string generate_white_noise_all(int output_levels, bool fourier, bool benchmark);
 
-int main()
+int main(int argc, const char* argv[])
 {
     double gamma = 2.2;
 
@@ -65,10 +65,14 @@ int main()
     // std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
     // std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
 
-    std::cout << error_diffusion_all("golden_gate", palette_black_white, true, true) << std::endl;
+    // std::cout << error_diffusion_all("golden_gate", palette_black_white, true, true) << std::endl;
     // std::cout << ordered_all("golden_gate", palette_black_white, true, true) << std::endl;
     // std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true, true) << std::endl;
     // std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_black_white, ErrorDiffusionAlgorithm::ATKINSON, true, false, true, true) << std::endl;
+
+    CLI cli = CLI();
+    cli.parse(argc, argv);
+    std::cout << cli.to_string() << std::endl;
 
     std::cout << "finished" << std::endl;
     return 0;

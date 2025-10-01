@@ -10,19 +10,19 @@ Use the `dither` command followed by the input and output flags and any number o
 | Flag | Description | Necessity |
 | :-- | :-- | :-- |
 | `-h, --help` | Displays help | Optional |
-| `-i, --input <FILE_PATH>` | Specifies the input png image file | Required |
+| `-i, --input <FILE_PATH>` | Specifies the input png image file path | Required |
 | `-o, --output <FILE_PATH>` | Specifies the file path the output png will be saved to | Required |
 | `-a, --gamma_correction` | Applies gamma correction the the input image | Optional |
-| `-g, --grayscale <GRAYSCALE_METHOD>` | Converts the input image to grayscale | Optional |
+| `-g, --grayscale <GRAYSCALE_WEIGHTS>` | Converts the input image to grayscale using the specified channel weights | Optional |
 | `-c, --convolve <KERNEL>` | Convolves the input image using the specified kernel | Optional |
-| `-r, --reduce <MAPPING_METHOD> <PALETTE>` | Reduces the image to the specified palette without applying dithering | Optional |
-| `-e, --error_diffusion <ALGORITHM> <MAPPING_METHOD> <PALETTE>` | Dithers the image using the specified error diffusion algorithm and color mapping method | Optional |
-| `-d, --ordered <THRESHOLD_MATRIX> <MAPPING_METHOD> <PALETTE>` | Dithers the image using the specified threshold matrix and color mapping method | Optional |
+| `-r, --reduce <MAPPING_METHOD>,<PALETTE>` | Reduces the image to the specified palette without applying dithering | Optional |
+| `-e, --error_diffusion <ALGORITHM>,<MAPPING_METHOD>,<PALETTE>` | Dithers the image using the specified error diffusion algorithm and color mapping method | Optional |
+| `-d, --ordered <THRESHOLD_MATRIX>,<MAPPING_METHOD>,<PALETTE>` | Dithers the image using the specified threshold matrix and color mapping method | Optional |
 | `-b, --benchmark` | Displays benchmark information to stdout | Optional |
 
-### Grayscale Methods
+### Grayscale Channel Weights
 Options when using the `-g, --grayscale` flag. Each pixel in the input image will be converted to grayscale according to the weights specified by the option.
-| GRAYSCALE_METHOD | Description |
+| GRAYSCALE_WEIGHTS | Description |
 | :-- | :-- |
 | `STANDARD` | R: 0.3334<br/>G: 0.3333<br/>B: 0.3333 |
 | `BT709` | R: 0.2126<br/>G: 0.7152<br/>B: 0.0722 |
