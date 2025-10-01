@@ -21,7 +21,7 @@ class Palette
 {
 public:
     Palette();
-    Palette(std::string name, std::vector<Color> colors);
+    Palette(std::string name, std::vector<Color> colors, double gamma);
     size_t size();
     Color get_color_at(int index);
     void add_color(Color color);
@@ -45,7 +45,9 @@ public:
 
 private:
     std::string name;
-    std::vector<Color> colors;
+    std::vector<Color> colors_srgb;
+    std::vector<Color> colors_linear;
+    double gamma;
 };
 
 #endif

@@ -24,10 +24,13 @@ struct Color
     int distance_redmean_squared(Color other);
     double distance_redmean(Color other);
     int distance_grayscale(Color other);
-
     static double distance_between(Color color1, Color color2);
 
+    void to_linear(double gamma);
+    void to_srgb(double gamma);
+
     std::string to_string();
+    std::string to_string_int();
 
     static inline constexpr int NUM_BYTES_COLOR = 4;
     static inline constexpr int INDEX_R = 0;
@@ -36,6 +39,7 @@ struct Color
     static inline constexpr int INDEX_A = 3;
 
     static inline constexpr int CHANNEL_MAX = 255;
+    static inline constexpr int NUM_CHANNELS = 256;
 
     int16_t r;
     int16_t g;

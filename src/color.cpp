@@ -108,11 +108,54 @@ double Color::distance_between(Color color1, Color color2)
     return sqrt(static_cast<double>(((color1.r - color2.r) * (color1.r - color2.r)) + ((color1.g - color2.g) * (color1.g - color2.g)) + ((color1.b - color2.b) * (color1.b - color2.b))));
 }
 
+// converts color to linear color space
+void Color::to_linear(double gamma)
+{
+    double r_scaled = static_cast<double>(r) / static_cast<double>(NUM_CHANNELS);
+    double g_scaled = static_cast<double>(g) / static_cast<double>(NUM_CHANNELS);
+    double b_scaled = static_cast<double>(b) / static_cast<double>(NUM_CHANNELS);
+
+    double r_linear = (r_scaled < 0.04045) ? (r_scaled / 12.92) : pow((r_scaled + 0.055) / 1.055, gamma);
+    double g_linear = (g_scaled < 0.04045) ? (g_scaled / 12.92) : pow((g_scaled + 0.055) / 1.055, gamma);
+    double b_linear = (b_scaled < 0.04045) ? (b_scaled / 12.92) : pow((b_scaled + 0.055) / 1.055, gamma);
+
+    r = static_cast<int16_t>(static_cast<double>(NUM_CHANNELS) * r_linear);
+    g = static_cast<int16_t>(static_cast<double>(NUM_CHANNELS) * g_linear);
+    b = static_cast<int16_t>(static_cast<double>(NUM_CHANNELS) * b_linear);
+
+    return;
+}
+
+// converts color to srgb color space
+void Color::to_srgb(double gamma)
+{
+    double r_scaled = static_cast<double>(r) / static_cast<double>(NUM_CHANNELS);
+    double g_scaled = static_cast<double>(g) / static_cast<double>(NUM_CHANNELS);
+    double b_scaled = static_cast<double>(b) / static_cast<double>(NUM_CHANNELS);
+
+    double r_linear = (r_scaled < 0.0031308) ? (r_scaled * 12.92) : (1.055 * pow(r_scaled, 1.0 / gamma) - 0.055);
+    double g_linear = (g_scaled < 0.0031308) ? (g_scaled * 12.92) : (1.055 * pow(g_scaled, 1.0 / gamma) - 0.055);
+    double b_linear = (b_scaled < 0.0031308) ? (b_scaled * 12.92) : (1.055 * pow(b_scaled, 1.0 / gamma) - 0.055);
+
+    r = static_cast<int16_t>(static_cast<double>(NUM_CHANNELS) * r_linear);
+    g = static_cast<int16_t>(static_cast<double>(NUM_CHANNELS) * g_linear);
+    b = static_cast<int16_t>(static_cast<double>(NUM_CHANNELS) * b_linear);
+
+    return;
+}
+
 // returns a string representation of the color
 std::string Color::to_string()
 {
     std::stringstream ss;
     ss << std::hex << hex();
     std::string output = ss.str();
+    return output;
+}
+
+std::string Color::to_string_int()
+{
+    std::string output = "";
+    output += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b);
     return output;
 }

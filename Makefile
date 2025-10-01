@@ -34,4 +34,4 @@ dither : $(OBJ)
 .PHONY : clean
 
 clean:
-	rm -f $(ODIR)/*.o $(CVDDIR)/*.png $(CTNDIR)/*.png $(EDDIR)/*.png $(ORDDIR)/*.png $(TMDIR)/*.png
+	rm -f $(BDIR)/*.exe $(ODIR)/*.o $(CVDDIR)/*.png $(CTNDIR)/*.png $(EDDIR)/*.png $(ORDDIR)/*.png $(TMDIR)/*.png

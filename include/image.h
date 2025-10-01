@@ -18,13 +18,20 @@ public:
     size_t save(const char* file_name);
     Color get_pixel(unsigned int x, unsigned int y);
     void set_pixel(Color color, unsigned int x, unsigned int y);
+    double get_gamma();
     void create_from_matrix(std::vector<std::vector<int>> matrix);
     std::vector<std::vector<int>> get_matrix_from_image();
+    void to_linear();
+    void to_srgb();
 
 private:
+    double srgb_to_linear(double value_srgb);
+    double linear_to_srgb(double value_linear);
+    
     std::vector<unsigned char> pixels;
     unsigned int width;
     unsigned int height;
+    double gamma;
 };
 
 #endif

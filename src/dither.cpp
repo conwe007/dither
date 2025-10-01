@@ -2,10 +2,11 @@
 #include <iostream>
 
 // initializes empty image and palette
-Dither::Dither()
+Dither::Dither(bool gamma_correction)
 {
-    image = Image();
-    palette = Palette();
+    this->image = Image();
+    this->palette = Palette();
+    this->gamma_correction = gamma_correction;
     return;
 }
 
@@ -39,6 +40,11 @@ void Dither::grayscale(GrayscaleMethod method)
 {
     std::size_t height = image.get_height();
     std::size_t width = image.get_width();
+
+    // if(gamma_correction)
+    // {
+    //     image.to_linear();
+    // }
     
     for(std::size_t y = 0; y < height; y++)
     {
@@ -51,6 +57,11 @@ void Dither::grayscale(GrayscaleMethod method)
         }
     }
 
+    // if(gamma_correction)
+    // {
+    //     image.to_srgb();
+    // }
+
     return;
 }
 
@@ -59,6 +70,11 @@ void Dither::reduce()
 {
     std::size_t height = image.get_height();
     std::size_t width = image.get_width();
+
+    // if(gamma_correction)
+    // {
+    //     image.to_linear();
+    // }
     
     for(std::size_t y = 0; y < height; y++)
     {
@@ -70,6 +86,11 @@ void Dither::reduce()
         }
     }
 
+    // if(gamma_correction)
+    // {
+    //     image.to_srgb();
+    // }
+
     return;
 }
 
@@ -77,6 +98,11 @@ void Dither::reduce()
 // if alternate_direction is true, switches direction of error diffusion each row
 void Dither::error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate)
 {
+    // if(gamma_correction)
+    // {
+    //     image.to_linear();
+    // }
+
     if(alternate)
     {
         error_diffusion_alternate(algorithm);
@@ -85,6 +111,11 @@ void Dither::error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate)
     {
         error_diffusion_standard(algorithm);
     }
+
+    // if(gamma_correction)
+    // {
+    //     image.to_srgb();
+    // }
 
     return;
 }
@@ -107,6 +138,11 @@ void Dither::ordered(std::vector<std::vector<int>> threshold_matrix)
     Color threshold_color_offset;
     Color palette_nearest;
 
+    // if(gamma_correction)
+    // {
+    //     image.to_linear();
+    // }
+
     for(std::size_t y = 0; y < image_height; y++)
     {
         for(std::size_t x = 0; x < image_width; x++)
@@ -126,6 +162,11 @@ void Dither::ordered(std::vector<std::vector<int>> threshold_matrix)
         }
     }
 
+    // if(gamma_correction)
+    // {
+    //     image.to_srgb();
+    // }
+
     return;
 }
 
@@ -143,6 +184,11 @@ void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
     std::vector<std::vector<int>> image_matrix_r;
     std::vector<std::vector<int>> image_matrix_g;
     std::vector<std::vector<int>> image_matrix_b;
+
+    // if(gamma_correction)
+    // {
+    //     image.to_linear();
+    // }
 
     switch(edge_handling)
     {
@@ -218,8 +264,6 @@ void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
             break;
     }
 
-    
-
     std::vector<std::vector<int>> image_matrix_r_convolved = convolve<int, double>(image_matrix_r, kernel);
     std::vector<std::vector<int>> image_matrix_g_convolved = convolve<int, double>(image_matrix_g, kernel);
     std::vector<std::vector<int>> image_matrix_b_convolved = convolve<int, double>(image_matrix_b, kernel);
@@ -235,6 +279,11 @@ void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
             image.set_pixel(color, x, y);
         }
     }
+
+    // if(gamma_correction)
+    // {
+    //     image.to_srgb();
+    // }
 
     return;
 }
@@ -254,6 +303,12 @@ void Dither::error_diffusion_standard(ErrorDiffusionAlgorithm algorithm)
         {
             // set current pixel to nearest palette color (accounting for accumulated error)
             Color color = image.get_pixel(x, y);
+
+            if(gamma_correction)
+            {
+                color.to_linear(image.get_gamma());
+            }
+            
             color.r += error_matrix[y][x][Color::INDEX_R];
             color.g += error_matrix[y][x][Color::INDEX_G];
             color.b += error_matrix[y][x][Color::INDEX_B];
@@ -301,6 +356,7 @@ void Dither::error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm)
             {
                 // set current pixel to nearest palette color (accounting for accumulated error)
                 Color color = image.get_pixel(x, y);
+                color.to_linear(image.get_gamma());
                 color.r += error_matrix[y][x][Color::INDEX_R];
                 color.g += error_matrix[y][x][Color::INDEX_G];
                 color.b += error_matrix[y][x][Color::INDEX_B];
@@ -332,6 +388,7 @@ void Dither::error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm)
             {
                 // set current pixel to nearest palette color (accounting for accumulated error)
                 Color color = image.get_pixel(x, y);
+                color.to_linear(image.get_gamma());
                 color.r += error_matrix[y][x][Color::INDEX_R];
                 color.g += error_matrix[y][x][Color::INDEX_G];
                 color.b += error_matrix[y][x][Color::INDEX_B];

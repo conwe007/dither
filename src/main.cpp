@@ -1,6 +1,7 @@
 #include "bayer.h"
 #include "benchmark.h"
 #include "convolve.h"
+#include "cxxopts.hpp"
 #include "dither.h"
 #include "error_diffusion.h"
 #include "fourier2d.h"
@@ -20,17 +21,17 @@ std::vector<std::vector<int>> load_matrix_from_png(std::string file_name);
 template <typename T>
 std::vector<std::vector<T>> create_matrix_from_noise(Noise2D<T> noise, std::size_t width, std::size_t height);
 
-std::string error_diffusion(std::string file_name, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool benchmark);
-std::string error_diffusion_all(std::string file_name, Palette palette, bool benchmark);
+std::string error_diffusion(std::string file_name, Palette palette, ErrorDiffusionAlgorithm algorithm, bool gamma_correction, bool alternate, bool benchmark);
+std::string error_diffusion_all(std::string file_name, Palette palette, bool gamma_correction, bool benchmark);
 
-std::string ordered(std::string file_name, Palette palette, ThresholdMatrix threshold_matrix_type, bool benchmark);
-std::string ordered_all(std::string file_name, Palette palette, bool benchmark);
+std::string ordered(std::string file_name, Palette palette, ThresholdMatrix threshold_matrix_type, bool gamma_correction, bool benchmark);
+std::string ordered_all(std::string file_name, Palette palette, bool gamma_correction, bool benchmark);
 
-std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, bool benchmark);
-std::string convolution_all(std::string file_name, EdgeHandling edge_handling, bool benchmark);
+std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, bool gamma_correction, bool benchmark);
+std::string convolution_all(std::string file_name, EdgeHandling edge_handling, bool gamma_correction, bool benchmark);
 
-std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool fourier, bool benchmark);
-std::string convolve_dither_all(std::string file_name, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool fourier, bool benchmark);
+std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool gamma_correction, bool alternate, bool fourier, bool benchmark);
+std::string convolve_dither_all(std::string file_name, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool gamma_correction, bool alternate, bool fourier, bool benchmark);
 
 std::string generate_bayer(int size, int output_levels, bool fourier, bool benchmark);
 std::string generate_bayer_all(int output_levels, bool fourier, bool benchmark);
@@ -44,12 +45,14 @@ std::string generate_white_noise_all(int output_levels, bool fourier, bool bench
 
 int main()
 {
+    double gamma = 2.2;
+
     std::string file_path_threshold_matrix = "output\\threshold_matrix\\";
-    Palette palette_black_white = Palette("BLACK_WHITE", Palette::preset_palettes.at(PresetPalette::BLACK_WHITE));
-    Palette palette_1bit_monitor_glow = Palette("_1BIT_MONITOR_GLOW", Palette::preset_palettes.at(PresetPalette::_1BIT_MONITOR_GLOW));
-    Palette palette_titanstone = Palette("TITANSTONE", Palette::preset_palettes.at(PresetPalette::TITANSTONE));
-    Palette palette_2bit_demichrome = Palette("_2BIT_DEMICHROME", Palette::preset_palettes.at(PresetPalette::_2BIT_DEMICHROME));
-    Palette palette_twilight5 = Palette("TWILIGHT5", Palette::preset_palettes.at(PresetPalette::TWILIGHT5));
+    Palette palette_black_white = Palette("BLACK_WHITE", Palette::preset_palettes.at(PresetPalette::BLACK_WHITE), gamma);
+    Palette palette_1bit_monitor_glow = Palette("_1BIT_MONITOR_GLOW", Palette::preset_palettes.at(PresetPalette::_1BIT_MONITOR_GLOW), gamma);
+    Palette palette_titanstone = Palette("TITANSTONE", Palette::preset_palettes.at(PresetPalette::TITANSTONE), gamma);
+    Palette palette_2bit_demichrome = Palette("_2BIT_DEMICHROME", Palette::preset_palettes.at(PresetPalette::_2BIT_DEMICHROME), gamma);
+    Palette palette_twilight5 = Palette("TWILIGHT5", Palette::preset_palettes.at(PresetPalette::TWILIGHT5), gamma);
 
     int output_levels = Color::CHANNEL_MAX + 1;
     double sigma_blue_noise = 1.9;
@@ -62,10 +65,10 @@ int main()
     // std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
     // std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
 
-    std::cout << error_diffusion_all("golden_gate", palette_titanstone, true) << std::endl;
-    // std::cout << ordered_all("forest", palette_twilight5, true) << std::endl;
-    std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true) << std::endl;
-    std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_titanstone, ErrorDiffusionAlgorithm::ATKINSON, false, true, true) << std::endl;
+    std::cout << error_diffusion_all("golden_gate", palette_black_white, true, true) << std::endl;
+    // std::cout << ordered_all("golden_gate", palette_black_white, true, true) << std::endl;
+    // std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true, true) << std::endl;
+    // std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_black_white, ErrorDiffusionAlgorithm::ATKINSON, true, false, true, true) << std::endl;
 
     std::cout << "finished" << std::endl;
     return 0;
@@ -108,14 +111,14 @@ std::vector<std::vector<T>> create_matrix_from_noise(Noise2D<T> noise, std::size
     return matrix;
 }
 
-std::string error_diffusion(std::string file_name, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool benchmark)
+std::string error_diffusion(std::string file_name, Palette palette, ErrorDiffusionAlgorithm algorithm, bool gamma_correction, bool alternate, bool benchmark)
 {
     std::string output = "";
     Benchmark bm = Benchmark();
     std::string file_path_input = "input\\" + file_name + ".png";
     std::string file_path_output = "output\\error_diffusion\\" + file_name;
     std::string file_path_suffix = "";
-    Dither dither = Dither();
+    Dither dither = Dither(gamma_correction);
 
     dither.set_palette(palette);
     dither.load(file_path_input.c_str());
@@ -136,46 +139,46 @@ std::string error_diffusion(std::string file_name, Palette palette, ErrorDiffusi
         output += std::to_string(bm.time_us()) + " us\n";;
     }
 
-    dither.save((file_path_output + "_" + ErrorDiffusion::ALGORITHM_STRING.at(algorithm) + ".png").c_str());
+    dither.save((file_path_output + "_" + ErrorDiffusion::ALGORITHM_STRING.at(algorithm) + (alternate ? "_alternate" : "_standard") + ".png").c_str());
 
     return output;
 }
 
-std::string error_diffusion_all(std::string file_name, Palette palette, bool benchmark)
+std::string error_diffusion_all(std::string file_name, Palette palette, bool gamma_correction, bool benchmark)
 {
     std::string output = "Error Diffusion:\n";
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::LINEAR, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::LINEAR, true, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::LINEAR, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::LINEAR, gamma_correction, true, benchmark);
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::FLOYD_STEINBERG, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::FLOYD_STEINBERG, true, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::FLOYD_STEINBERG, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::FLOYD_STEINBERG, gamma_correction, true, benchmark);
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::JARVICE_JUDICE_NINKE, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::JARVICE_JUDICE_NINKE, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::JARVICE_JUDICE_NINKE, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::JARVICE_JUDICE_NINKE, gamma_correction, true, benchmark);
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::STUCKI, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::STUCKI, true, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::STUCKI, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::STUCKI, gamma_correction, true, benchmark);
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::ATKINSON, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::ATKINSON, true, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::ATKINSON, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::ATKINSON, gamma_correction, true, benchmark);
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::BURKES, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::BURKES, true, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::BURKES, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::BURKES, gamma_correction, true, benchmark);
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA, true, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA, gamma_correction, true, benchmark);
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_TWO_ROW, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_TWO_ROW, true, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_TWO_ROW, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_TWO_ROW, gamma_correction, true, benchmark);
 
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_LITE, false, benchmark);
-    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_LITE, true, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_LITE, gamma_correction, false, benchmark);
+    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_LITE, gamma_correction, true, benchmark);
 
     return output;
 }
 
-std::string ordered(std::string file_name, Palette palette, ThresholdMatrix threshold_matrix_type, bool benchmark)
+std::string ordered(std::string file_name, Palette palette, ThresholdMatrix threshold_matrix_type, bool gamma_correction, bool benchmark)
 {
     std::string output = "";
     Benchmark bm = Benchmark();
@@ -184,7 +187,7 @@ std::string ordered(std::string file_name, Palette palette, ThresholdMatrix thre
     std::string file_path_output = "output\\ordered\\" + file_name;
     std::string file_path_suffix = "";
     std::vector<std::vector<int>> threshold_matrix = load_matrix_from_png(file_path_threshold + THRESHOLD_MATRIX_STRING.at(threshold_matrix_type) + ".png");
-    Dither dither = Dither();
+    Dither dither = Dither(gamma_correction);
 
     dither.set_palette(palette);
     dither.load(file_path_input.c_str());
@@ -210,49 +213,49 @@ std::string ordered(std::string file_name, Palette palette, ThresholdMatrix thre
     return output;
 }
 
-std::string ordered_all(std::string file_name, Palette palette, bool benchmark)
+std::string ordered_all(std::string file_name, Palette palette, bool gamma_correction, bool benchmark)
 {
     std::string output = "Ordered:\n";
 
-    output += ordered(file_name, palette, ThresholdMatrix::BAYER_2X2, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BAYER_4X4, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BAYER_8X8, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BAYER_16X16, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BAYER_32X32, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BAYER_64X64, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BAYER_2X2, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BAYER_4X4, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BAYER_8X8, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BAYER_16X16, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BAYER_32X32, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BAYER_64X64, gamma_correction, benchmark);
 
-    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_2X2, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_4X4, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_8X8, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_16X16, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_32X32, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_64X64, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_2X2, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_4X4, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_8X8, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_16X16, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_32X32, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BLUE_NOISE_64X64, gamma_correction, benchmark);
 
-    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_2X2, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_4X4, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_8X8, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_16X16, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_32X32, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_64X64, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_2X2, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_4X4, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_8X8, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_16X16, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_32X32, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::BROWN_NOISE_64X64, gamma_correction, benchmark);
 
-    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_2X2, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_4X4, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_8X8, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_16X16, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_32X32, benchmark);
-    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_64X64, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_2X2, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_4X4, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_8X8, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_16X16, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_32X32, gamma_correction, benchmark);
+    output += ordered(file_name, palette, ThresholdMatrix::WHITE_NOISE_64X64, gamma_correction, benchmark);
     
     return output;
 }
 
-std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, bool benchmark)
+std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, bool gamma_correction, bool benchmark)
 {
     std::string output = "";
     Benchmark bm = Benchmark();
     std::string file_path_input = "input\\" + file_name + ".png";
     std::string file_path_output = "output\\convolution\\" + file_name;
     std::string file_path_suffix = "";
-    Dither dither = Dither();
+    Dither dither = Dither(gamma_correction);
 
     dither.load(file_path_input.c_str());
 
@@ -277,29 +280,29 @@ std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling 
     return output;
 }
 
-std::string convolution_all(std::string file_name, EdgeHandling edge_handling, bool benchmark)
+std::string convolution_all(std::string file_name, EdgeHandling edge_handling, bool gamma_correction, bool benchmark)
 {
     std::string output = "Convolution:\n";
 
-    output += convolution(file_name, Kernel::RIDGE_4, edge_handling, benchmark);
-    output += convolution(file_name, Kernel::RIDGE_8, edge_handling, benchmark);
-    output += convolution(file_name, Kernel::SHARPEN_4, edge_handling, benchmark);
-    output += convolution(file_name, Kernel::SHARPEN_8, edge_handling, benchmark);
-    output += convolution(file_name, Kernel::BOX_BLUR, edge_handling, benchmark);
-    output += convolution(file_name, Kernel::GAUSSIAN_BLUR, edge_handling, benchmark);
-    output += convolution(file_name, Kernel::UNSHARP_MASK, edge_handling, benchmark);
+    output += convolution(file_name, Kernel::RIDGE_4, edge_handling, gamma_correction, benchmark);
+    output += convolution(file_name, Kernel::RIDGE_8, edge_handling, gamma_correction, benchmark);
+    output += convolution(file_name, Kernel::SHARPEN_4, edge_handling, gamma_correction, benchmark);
+    output += convolution(file_name, Kernel::SHARPEN_8, edge_handling, gamma_correction, benchmark);
+    output += convolution(file_name, Kernel::BOX_BLUR, edge_handling, gamma_correction, benchmark);
+    output += convolution(file_name, Kernel::GAUSSIAN_BLUR, edge_handling, gamma_correction, benchmark);
+    output += convolution(file_name, Kernel::UNSHARP_MASK, edge_handling, gamma_correction, benchmark);
     
     return output;
 }
 
-std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool fourier, bool benchmark)
+std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool gamma_correction, bool alternate, bool fourier, bool benchmark)
 {
     std::string output = "";
     Benchmark bm = Benchmark();
     std::string file_path_suffix = ".png";
     std::string file_path_input = "input\\" + file_name + file_path_suffix;
     std::string file_path_output = "output\\convolve_dither\\" + file_name;
-    Dither dither = Dither();
+    Dither dither = Dither(gamma_correction);
     std::size_t output_levels = Color::CHANNEL_MAX + 1;
 
     dither.set_palette(palette);
@@ -355,17 +358,17 @@ std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandl
     return output;
 }
 
-std::string convolve_dither_all(std::string file_name, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool alternate, bool fourier, bool benchmark)
+std::string convolve_dither_all(std::string file_name, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool gamma_correction, bool alternate, bool fourier, bool benchmark)
 {
     std::string output = "Convolve Dither:\n";
 
-    output += convolve_dither(file_name, Kernel::RIDGE_4, edge_handling, palette, algorithm, alternate, fourier, benchmark);
-    output += convolve_dither(file_name, Kernel::RIDGE_8, edge_handling, palette, algorithm, alternate, fourier, benchmark);
-    output += convolve_dither(file_name, Kernel::SHARPEN_4, edge_handling, palette, algorithm, alternate, fourier, benchmark);
-    output += convolve_dither(file_name, Kernel::SHARPEN_8, edge_handling, palette, algorithm, alternate, fourier, benchmark);
-    output += convolve_dither(file_name, Kernel::BOX_BLUR, edge_handling, palette, algorithm, alternate, fourier, benchmark);
-    output += convolve_dither(file_name, Kernel::GAUSSIAN_BLUR, edge_handling, palette, algorithm, alternate, fourier, benchmark);
-    output += convolve_dither(file_name, Kernel::UNSHARP_MASK, edge_handling, palette, algorithm, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::RIDGE_4, edge_handling, palette, algorithm, gamma_correction, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::RIDGE_8, edge_handling, palette, algorithm, gamma_correction, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::SHARPEN_4, edge_handling, palette, algorithm, gamma_correction, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::SHARPEN_8, edge_handling, palette, algorithm, gamma_correction, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::BOX_BLUR, edge_handling, palette, algorithm, gamma_correction, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::GAUSSIAN_BLUR, edge_handling, palette, algorithm, gamma_correction, alternate, fourier, benchmark);
+    output += convolve_dither(file_name, Kernel::UNSHARP_MASK, edge_handling, palette, algorithm, gamma_correction, alternate, fourier, benchmark);
     
     return output;
 }
