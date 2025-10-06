@@ -60,19 +60,15 @@ int main(int argc, const char* argv[])
     size_t kernel_size = 3;
     double sigma_brown_noise = 1.0;
     
-    // std::cout << generate_bayer_all(output_levels, true, true) << std::endl;
-    // std::cout << generate_blue_noise_all(sigma_blue_noise, output_levels, true, true) << std::endl;
-    // std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
-    // std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
+    std::cout << generate_bayer_all(output_levels, true, true) << std::endl;
+    std::cout << generate_blue_noise_all(sigma_blue_noise, output_levels, true, true) << std::endl;
+    std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
+    std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
 
-    // std::cout << error_diffusion_all("golden_gate", palette_black_white, true, true) << std::endl;
-    // std::cout << ordered_all("golden_gate", palette_black_white, true, true) << std::endl;
-    // std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true, true) << std::endl;
-    // std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_black_white, ErrorDiffusionAlgorithm::ATKINSON, true, false, true, true) << std::endl;
-
-    CLI cli = CLI();
-    cli.parse(argc, argv);
-    std::cout << cli.to_string() << std::endl;
+    std::cout << error_diffusion_all("golden_gate", palette_black_white, true, true) << std::endl;
+    std::cout << ordered_all("golden_gate", palette_black_white, true, true) << std::endl;
+    std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true, true) << std::endl;
+    std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_black_white, ErrorDiffusionAlgorithm::ATKINSON, true, false, true, true) << std::endl;
 
     std::cout << "finished" << std::endl;
     return 0;
@@ -122,7 +118,7 @@ std::string error_diffusion(std::string file_name, Palette palette, ErrorDiffusi
     std::string file_path_input = "input\\" + file_name + ".png";
     std::string file_path_output = "output\\error_diffusion\\" + file_name;
     std::string file_path_suffix = "";
-    Dither dither = Dither(gamma_correction);
+    Dither dither = Dither(1, gamma_correction);
 
     dither.set_palette(palette);
     dither.load(file_path_input.c_str());
@@ -152,32 +148,32 @@ std::string error_diffusion_all(std::string file_name, Palette palette, bool gam
 {
     std::string output = "Error Diffusion:\n";
 
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::LINEAR, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::LINEAR, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::LINEAR, gamma_correction, false, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::LINEAR, gamma_correction, true, benchmark);
 
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::FLOYD_STEINBERG, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::FLOYD_STEINBERG, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::FLOYD_STEINBERG, gamma_correction, false, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::FLOYD_STEINBERG, gamma_correction, true, benchmark);
 
     output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::JARVICE_JUDICE_NINKE, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::JARVICE_JUDICE_NINKE, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::JARVICE_JUDICE_NINKE, gamma_correction, true, benchmark);
 
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::STUCKI, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::STUCKI, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::STUCKI, gamma_correction, false, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::STUCKI, gamma_correction, true, benchmark);
 
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::ATKINSON, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::ATKINSON, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::ATKINSON, gamma_correction, false, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::ATKINSON, gamma_correction, true, benchmark);
 
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::BURKES, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::BURKES, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::BURKES, gamma_correction, false, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::BURKES, gamma_correction, true, benchmark);
 
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA, gamma_correction, false, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA, gamma_correction, true, benchmark);
 
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_TWO_ROW, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_TWO_ROW, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_TWO_ROW, gamma_correction, false, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_TWO_ROW, gamma_correction, true, benchmark);
 
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_LITE, gamma_correction, false, benchmark);
-    // output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_LITE, gamma_correction, true, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_LITE, gamma_correction, false, benchmark);
+    output += error_diffusion(file_name, palette, ErrorDiffusionAlgorithm::SIERRA_LITE, gamma_correction, true, benchmark);
 
     return output;
 }
@@ -191,7 +187,7 @@ std::string ordered(std::string file_name, Palette palette, ThresholdMatrix thre
     std::string file_path_output = "output\\ordered\\" + file_name;
     std::string file_path_suffix = "";
     std::vector<std::vector<int>> threshold_matrix = load_matrix_from_png(file_path_threshold + THRESHOLD_MATRIX_STRING.at(threshold_matrix_type) + ".png");
-    Dither dither = Dither(gamma_correction);
+    Dither dither = Dither(1, gamma_correction);
 
     dither.set_palette(palette);
     dither.load(file_path_input.c_str());
@@ -259,7 +255,7 @@ std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling 
     std::string file_path_input = "input\\" + file_name + ".png";
     std::string file_path_output = "output\\convolution\\" + file_name;
     std::string file_path_suffix = "";
-    Dither dither = Dither(gamma_correction);
+    Dither dither = Dither(1, gamma_correction);
 
     dither.load(file_path_input.c_str());
 
@@ -306,7 +302,7 @@ std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandl
     std::string file_path_suffix = ".png";
     std::string file_path_input = "input\\" + file_name + file_path_suffix;
     std::string file_path_output = "output\\convolve_dither\\" + file_name;
-    Dither dither = Dither(gamma_correction);
+    Dither dither = Dither(1, gamma_correction);
     std::size_t output_levels = Color::CHANNEL_MAX + 1;
 
     dither.set_palette(palette);

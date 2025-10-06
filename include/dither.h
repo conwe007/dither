@@ -12,7 +12,7 @@
 class Dither
 {
 public:
-    Dither(bool gamma_correction);
+    Dither(std::size_t frames, bool gamma_correction);
     std::vector<std::vector<int>> get_matrix();
     void set_palette(Palette palette);
     std::size_t load(const char* file_name);
@@ -22,6 +22,7 @@ public:
     void error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate);
     void ordered(std::vector<std::vector<int>> threshold_matrix);
     void convolution(Kernel kernel_type, EdgeHandling edge_handling);
+    void temporal();
 
 private:
     Image image;

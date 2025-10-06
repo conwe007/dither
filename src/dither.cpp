@@ -2,9 +2,9 @@
 #include <iostream>
 
 // initializes empty image and palette
-Dither::Dither(bool gamma_correction)
+Dither::Dither(std::size_t frames, bool gamma_correction)
 {
-    this->image = Image();
+    this->image = Image(frames);
     this->palette = Palette();
     this->gamma_correction = gamma_correction;
     return;
@@ -40,11 +40,6 @@ void Dither::grayscale(GrayscaleMethod method)
 {
     std::size_t height = image.get_height();
     std::size_t width = image.get_width();
-
-    // if(gamma_correction)
-    // {
-    //     image.to_linear();
-    // }
     
     for(std::size_t y = 0; y < height; y++)
     {
@@ -57,11 +52,6 @@ void Dither::grayscale(GrayscaleMethod method)
         }
     }
 
-    // if(gamma_correction)
-    // {
-    //     image.to_srgb();
-    // }
-
     return;
 }
 
@@ -70,11 +60,6 @@ void Dither::reduce()
 {
     std::size_t height = image.get_height();
     std::size_t width = image.get_width();
-
-    // if(gamma_correction)
-    // {
-    //     image.to_linear();
-    // }
     
     for(std::size_t y = 0; y < height; y++)
     {
@@ -86,11 +71,6 @@ void Dither::reduce()
         }
     }
 
-    // if(gamma_correction)
-    // {
-    //     image.to_srgb();
-    // }
-
     return;
 }
 
@@ -98,11 +78,6 @@ void Dither::reduce()
 // if alternate_direction is true, switches direction of error diffusion each row
 void Dither::error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate)
 {
-    // if(gamma_correction)
-    // {
-    //     image.to_linear();
-    // }
-
     if(alternate)
     {
         error_diffusion_alternate(algorithm);
@@ -111,11 +86,6 @@ void Dither::error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate)
     {
         error_diffusion_standard(algorithm);
     }
-
-    // if(gamma_correction)
-    // {
-    //     image.to_srgb();
-    // }
 
     return;
 }
@@ -138,11 +108,6 @@ void Dither::ordered(std::vector<std::vector<int>> threshold_matrix)
     Color threshold_color_offset;
     Color palette_nearest;
 
-    // if(gamma_correction)
-    // {
-    //     image.to_linear();
-    // }
-
     for(std::size_t y = 0; y < image_height; y++)
     {
         for(std::size_t x = 0; x < image_width; x++)
@@ -162,11 +127,6 @@ void Dither::ordered(std::vector<std::vector<int>> threshold_matrix)
         }
     }
 
-    // if(gamma_correction)
-    // {
-    //     image.to_srgb();
-    // }
-
     return;
 }
 
@@ -184,11 +144,6 @@ void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
     std::vector<std::vector<int>> image_matrix_r;
     std::vector<std::vector<int>> image_matrix_g;
     std::vector<std::vector<int>> image_matrix_b;
-
-    // if(gamma_correction)
-    // {
-    //     image.to_linear();
-    // }
 
     switch(edge_handling)
     {
@@ -280,12 +235,12 @@ void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
         }
     }
 
-    // if(gamma_correction)
-    // {
-    //     image.to_srgb();
-    // }
-
     return;
+}
+
+void Dither::temporal()
+{
+
 }
 
 // dithers using specified algorithm, does not alternate direction on odd rows

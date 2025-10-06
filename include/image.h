@@ -2,6 +2,7 @@
 #define __IMAGE_H
 
 #include "color.h" // Color struct
+#include "gif.h" // 
 #include "grayscale.h" // Grayscale::channel_value
 #include "lodepng.h" // png encode/decode functions
 #include <algorithm> // std::clamp
@@ -11,13 +12,14 @@ class Image
 {
 public:
     Image();
+    Image(std::size_t frames);
     void clear();
-    size_t get_width();
-    size_t get_height();
-    size_t load(const char* file_name);
-    size_t save(const char* file_name);
-    Color get_pixel(unsigned int x, unsigned int y);
-    void set_pixel(Color color, unsigned int x, unsigned int y);
+    std::size_t get_width();
+    std::size_t get_height();
+    std::size_t load(const char* file_name);
+    std::size_t save(const char* file_name);
+    Color get_pixel(unsigned int x, unsigned int y, std::size_t frame = 0);
+    void set_pixel(Color color, unsigned int x, unsigned int y, std::size_t frame = 0);
     double get_gamma();
     void create_from_matrix(std::vector<std::vector<int>> matrix);
     std::vector<std::vector<int>> get_matrix_from_image();
@@ -28,10 +30,11 @@ private:
     double srgb_to_linear(double value_srgb);
     double linear_to_srgb(double value_linear);
     
-    std::vector<unsigned char> pixels;
+    std::vector<std::vector<unsigned char>> pixels;
     unsigned int width;
     unsigned int height;
     double gamma;
+    std::size_t frames;
 };
 
 #endif

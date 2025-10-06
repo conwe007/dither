@@ -4,48 +4,75 @@
 // initializes empty image
 Image::Image()
 {
-    pixels.resize(0);
+    pixels.resize(1);
+    pixels[0].resize(0);
     width = 0;
     height = 0;
     gamma = 0.0;
+    frames = 1;
+    return;
+}
+
+// initializes empty image
+Image::Image(std::size_t frames)
+{
+    this->pixels.resize(frames);
+    
+    for(std::size_t index_frame = 0; index_frame < frames; index_frame++)
+    {
+        this->pixels[index_frame].resize(0);
+    }
+
+    this->width = 0;
+    this->height = 0;
+    this->gamma = 0.0;
+    this->frames = frames;
+
     return;
 }
 
 // erases all image data and reinitializes object
 void Image::clear()
 {
-    pixels.resize(0);
+    pixels.resize(frames);
+
+    for(std::size_t index_frame = 0; index_frame < frames; index_frame++)
+    {
+        this->pixels[index_frame].resize(0);
+    }
+
     width = 0;
     height = 0;
     gamma = 0.0;
+
     return;
 }
 
 // returns image's width
-size_t Image::get_width()
+std::size_t Image::get_width()
 {
     return width;
 }
 
 // returns image's height
-size_t Image::get_height()
+std::size_t Image::get_height()
 {
     return height;
 }
 
 // loads a png from the specified path
-size_t Image::load(const char* file_name)
+std::size_t Image::load(const char* file_name)
 {
     clear();
     
     std::vector<unsigned char> png_buffer;
     lodepng::State state;
 
-    size_t error = lodepng::load_file(png_buffer, file_name);
+    std::size_t error = lodepng::load_file(png_buffer, file_name);
 
     if(!error)
     {
-        error = lodepng::decode(pixels, width, height, state, png_buffer);
+        error = lodepng::decode(pixels[0], width, height, state, png_buffer);
     }
 
     if(error)
@@ -63,38 +90,63 @@ size_t Image::load(const char* file_name)
 }
 
 // saves a png to the specified path
-size_t Image::save(const char* file_name)
+std::size_t Image::save(const char* file_name)
 {
-    size_t error = lodepng::encode(file_name, pixels, width, height);
+    std::string file_name_string = file_name;
+    std::size_t error = 0;
 
-    if(error)
+    if(file_name_string.contains(".png"))
     {
-        std::cout << "error: save - " << error << ": "<< lodepng_error_text(error) << std::endl;
+        error = lodepng::encode(file_name, pixels[0], width, height);
+
+        if(error)
+        {
+            std::cout << "error: png save " << file_name << " - " << error << ": "<< lodepng_error_text(error) << std::endl;
+        }
+    }
+    else if(file_name_string.contains(".gif"))
+    {
+        const uint32_t DELAY = 1;
+        const uint32_t BIT_DEPTH = 8;
+        const bool DITHER = false;
+        GifWriter writer = {};
+        bool error_bool = GifBegin(&writer, file_name, width, height, DELAY, BIT_DEPTH, DITHER);
+
+        for(std::size_t index_frame = 0; index_frame < frames; index_frame++)
+        {
+            error_bool = GifWriteFrame(&writer, pixels[index_frame].data(), width, height, DELAY, BIT_DEPTH, DITHER);
+        }
+
+        if(error_bool)
+        {
+            std::cout << "error: gif save - " << file_name << std::endl;
+            error = 1;
+        }
     }
 
     return error;
 }
 
 // gets the pixel color at (x, y)
-Color Image::get_pixel(unsigned int x, unsigned int y)
+Color Image::get_pixel(unsigned int x, unsigned int y, std::size_t frame)
 {
     Color color = Color();
     int index_start = Color::NUM_BYTES_COLOR * width * y + Color::NUM_BYTES_COLOR * x;
-    color.r = pixels[index_start + Color::INDEX_R];
-    color.g = pixels[index_start + Color::INDEX_G];
-    color.b = pixels[index_start + Color::INDEX_B];
-    color.a = pixels[index_start + Color::INDEX_A];
+    color.r = pixels[frame][index_start + Color::INDEX_R];
+    color.g = pixels[frame][index_start + Color::INDEX_G];
+    color.b = pixels[frame][index_start + Color::INDEX_B];
+    color.a = pixels[frame][index_start + Color::INDEX_A];
     return color;
 }
 
 // sets the pixel color at (x, y)
-void Image::set_pixel(Color color, unsigned int x, unsigned int y)
+void Image::set_pixel(Color color, unsigned int x, unsigned int y, std::size_t frame)
 {
     int index_start = Color::NUM_BYTES_COLOR * width * y + Color::NUM_BYTES_COLOR * x;
-    pixels[index_start + Color::INDEX_R] = color.r;
-    pixels[index_start + Color::INDEX_G] = color.g;
-    pixels[index_start + Color::INDEX_B] = color.b;
-    pixels[index_start + Color::INDEX_A] = color.a;
+    pixels[frame][index_start + Color::INDEX_R] = color.r;
+    pixels[frame][index_start + Color::INDEX_G] = color.g;
+    pixels[frame][index_start + Color::INDEX_B] = color.b;
+    pixels[frame][index_start + Color::INDEX_A] = color.a;
     return;
 }
 
@@ -109,7 +161,7 @@ void Image::create_from_matrix(std::vector<std::vector<int>> matrix)
 {
     height = matrix.size();
     width = matrix[0].size();
-    pixels.resize(width * height * Color::NUM_BYTES_COLOR);
+    pixels[0].resize(width * height * Color::NUM_BYTES_COLOR);
 
     for(size_t y = 0; y < height; y++)
     {
@@ -117,10 +169,10 @@ void Image::create_from_matrix(std::vector<std::vector<int>> matrix)
         {
             unsigned char channel_value = static_cast<unsigned char>(std::clamp(matrix[y][x], 0, Color::CHANNEL_MAX));
             int index_pixels = Color::NUM_BYTES_COLOR * width * y + Color::NUM_BYTES_COLOR * x;
-            pixels[index_pixels + 0] = channel_value;
-            pixels[index_pixels + 1] = channel_value;
-            pixels[index_pixels + 2] = channel_value;
-            pixels[index_pixels + 3] = Color::CHANNEL_MAX;
+            pixels[0][index_pixels + 0] = channel_value;
+            pixels[0][index_pixels + 1] = channel_value;
+            pixels[0][index_pixels + 2] = channel_value;
+            pixels[0][index_pixels + 3] = Color::CHANNEL_MAX;
         }
     }
 
@@ -146,18 +198,12 @@ std::vector<std::vector<int>> Image::get_matrix_from_image()
 // converts image to linear color space
 void Image::to_linear()
 {
-    // double output_levels = (Color::CHANNEL_MAX + 1);
-    // gamma = new_gamma;
-
     for(size_t y = 0; y < height; y++)
     {
         for(size_t x = 0; x < width; x++)
         {
             Color color = get_pixel(x, y);
             color.to_linear(gamma);
-            // color.r = static_cast<int16_t>(output_levels * srgb_to_linear(static_cast<double>(color.r) / output_levels));
-            // color.g = static_cast<int16_t>(output_levels * srgb_to_linear(static_cast<double>(color.g) / output_levels));
-            // color.b = static_cast<int16_t>(output_levels * srgb_to_linear(static_cast<double>(color.b) / output_levels));
             set_pixel(color, x, y);
         }
     }
@@ -168,17 +214,12 @@ void Image::to_linear()
 // converts image to srgb color space
 void Image::to_srgb()
 {
-    // double output_levels = (Color::CHANNEL_MAX + 1);
-
     for(size_t y = 0; y < height; y++)
     {
         for(size_t x = 0; x < width; x++)
         {
             Color color = get_pixel(x, y);
             color.to_srgb(gamma);
-            // color.r = static_cast<int16_t>(output_levels * linear_to_srgb(static_cast<double>(color.r) / output_levels));
-            // color.g = static_cast<int16_t>(output_levels * linear_to_srgb(static_cast<double>(color.g) / output_levels));
-            // color.b = static_cast<int16_t>(output_levels * linear_to_srgb(static_cast<double>(color.b) / output_levels));
             set_pixel(color, x, y);
         }
     }
