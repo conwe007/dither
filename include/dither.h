@@ -7,6 +7,7 @@
 #include "image.h" // data structure for colors
 #include "lodepng.h" // for loading input pngs and saving to output pngs
 #include "palette.h" // datastructure for colors
+#include <random> // std::random_device, std::mt19337, std::uniform_int_distribution
 #include <vector> // std::vector
 
 class Dither
@@ -22,7 +23,7 @@ public:
     void error_diffusion(ErrorDiffusionAlgorithm algorithm, bool alternate);
     void ordered(std::vector<std::vector<int>> threshold_matrix);
     void convolution(Kernel kernel_type, EdgeHandling edge_handling);
-    void temporal();
+    void temporal(std::string method);
 
 private:
     Image image;
@@ -31,6 +32,8 @@ private:
 
     void error_diffusion_standard(ErrorDiffusionAlgorithm algorithm);
     void error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm);
+    void temporal_random();
+    void temporal_pwm();
     std::vector<std::vector<double>> normalize_threshold_matrix(std::vector<std::vector<int>> threshold_matrix);
     std::vector<std::vector<int>> scale_threshold_matrix(std::vector<std::vector<int>> threshold_matrix, int min, int max);
 };

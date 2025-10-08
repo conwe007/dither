@@ -9,6 +9,7 @@ CVDDIR = $(OUTDIR)/convolve_dither
 EDDIR = $(OUTDIR)/error_diffusion
 ORDDIR = $(OUTDIR)/ordered
 TMDIR = $(OUTDIR)/threshold_matrix
+TMPDIR = $(OUTDIR)/temporal
 
 CC = g++
 CFLAGS = -I$(IDIR) -L$(LDIR) -Wall -std=c++26
@@ -34,4 +35,4 @@ dither : $(OBJ)
 .PHONY : clean
 
 clean:
-	rm -f $(BDIR)/*.exe $(ODIR)/*.o $(CVDDIR)/*.png $(CTNDIR)/*.png $(EDDIR)/*.png $(ORDDIR)/*.png $(TMDIR)/*.png
+	rm -f $(BDIR)/*.exe $(ODIR)/*.o $(CVDDIR)/*.png $(CTNDIR)/*.png $(EDDIR)/*.png $(ORDDIR)/*.png $(TMDIR)/*.png $(TMPDIR)/*.gif

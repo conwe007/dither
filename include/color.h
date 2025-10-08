@@ -18,6 +18,7 @@ struct Color
     Color operator+(const Color& other) const;
     Color operator*(const double scalar) const;
     uint32_t hex();
+    double get_lightness();
 
     int distance_squared(Color other);
     double distance(Color other);

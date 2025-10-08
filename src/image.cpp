@@ -75,11 +75,20 @@ std::size_t Image::load(const char* file_name)
         error = lodepng::decode(pixels[0], width, height, state, png_buffer);
     }
 
+    if(!error && frames > 1)
+    {
+        for(std::size_t index_frame = 1; index_frame < frames; index_frame++)
+        {
+            pixels[index_frame].resize(width * height * Color::NUM_BYTES_COLOR);
+        }
+    }
+
     if(error)
     {
         std::cout << "error: load" << file_name << " - " << error << ": " << lodepng_error_text(error) << std::endl;
         return error;
     }
+    
 
     if(state.info_png.gama_defined)
     {
@@ -106,7 +115,7 @@ std::size_t Image::save(const char* file_name)
     }
     else if(file_name_string.contains(".gif"))
     {
-        const uint32_t DELAY = 1;
+        const uint32_t DELAY = 2; // many gif viewers will ignore delay values < 2
         const uint32_t BIT_DEPTH = 8;
         const bool DITHER = false;
         GifWriter writer = {};
@@ -114,7 +123,7 @@ std::size_t Image::save(const char* file_name)
 
         for(std::size_t index_frame = 0; index_frame < frames; index_frame++)
         {
-            error_bool = GifWriteFrame(&writer, pixels[index_frame].data(), width, height, DELAY, BIT_DEPTH, DITHER);
+            error_bool = !GifWriteFrame(&writer, pixels[index_frame].data(), width, height, DELAY, BIT_DEPTH, DITHER);
         }
 
         if(error_bool)
@@ -154,6 +163,12 @@ void Image::set_pixel(Color color, unsigned int x, unsigned int y, std::size_t f
 double Image::get_gamma()
 {
     return gamma;
+}
+
+// returns the number of frames in the image
+std::size_t Image::get_frames()
+{
+    return frames;
 }
 
 // fills image with a grayscale representation of specified matrix

@@ -238,9 +238,22 @@ void Dither::convolution(Kernel kernel_type, EdgeHandling edge_handling)
     return;
 }
 
-void Dither::temporal()
+void Dither::temporal(std::string method)
 {
+    if(method == "RANDOM")
+    {
+        temporal_random();
+    }
+    else if(method == "PWM")
+    {
+        temporal_pwm();
+    }
+    else
+    {
+        std::cout << "error: unrecognized temporal dithering method - " << method << std::endl;
+    }
 
+    return;
 }
 
 // dithers using specified algorithm, does not alternate direction on odd rows
@@ -368,6 +381,89 @@ void Dither::error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm)
 
                 image.set_pixel(palette_nearest, x, y);
             }
+        }
+    }
+
+    return;
+}
+
+void Dither::temporal_random()
+{
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::size_t image_height = image.get_height();
+    std::size_t image_width = image.get_width();
+    std::size_t image_frames = image.get_frames();
+    std::size_t palette_size = palette.size();
+    Color color;
+    std::vector<double> weights;
+
+    for(std::size_t y = 0; y < image_height; y++)
+    {
+        for(std::size_t x = 0; x < image_width; x++)
+        {
+            // calculate the pixel's similarity to each color in the palette
+            color = image.get_pixel(x, y);
+            weights.resize(0);
+
+            if(gamma_correction)
+            {
+                color.to_linear(image.get_gamma());
+            }
+
+            for(std::size_t index_palette = 0; index_palette < palette_size; index_palette++)
+            {
+                weights.push_back(1.0 / color.distance(palette.get_color_at(index_palette)));
+            }
+
+            std::discrete_distribution<> dis(weights.begin(), weights.end());
+
+            for(std::size_t index_frame = 0; index_frame < image_frames; index_frame++)
+            {
+                image.set_pixel(palette.get_color_at(dis(mt)), x, y, index_frame);
+            }
+            
+        }
+    }
+
+    return;
+}
+
+void Dither::temporal_pwm()
+{
+    std::size_t image_height = image.get_height();
+    std::size_t image_width = image.get_width();
+    std::size_t image_frames = image.get_frames();
+    std::size_t palette_size = palette.size();
+    Color color;
+    double lightness;
+
+    for(std::size_t y = 0; y < image_height; y++)
+    {
+        for(std::size_t x = 0; x < image_width; x++)
+        {
+            // calculate the pixel's similarity to each color in the palette
+            color = image.get_pixel(x, y);
+            lightness = color.get_lightness();
+            std::vector<double> weights;
+
+            if(gamma_correction)
+            {
+                color.to_linear(image.get_gamma());
+            }
+
+            for(std::size_t index_palette = 0; index_palette < palette_size; index_palette++)
+            {
+                weights.push_back(1.0 / color.distance(palette.get_color_at(index_palette)));
+            }
+
+            std::discrete_distribution<> dis(weights.begin(), weights.end());
+
+            for(std::size_t index_frame = 0; index_frame < image_frames; index_frame++)
+            {
+                // image.set_pixel(palette_color, x, y, index_frame);
+            }
+            
         }
     }
 

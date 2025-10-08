@@ -68,6 +68,11 @@ uint32_t Color::hex()
     return (r << 24) + (g << 16) + (b << 8) + (a << 0);
 }
 
+double Color::get_lightness()
+{
+    return static_cast<double>(std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / (2.0 * static_cast<double>(CHANNEL_MAX));
+}
+
 // returns the euclidean distance squared to the specified color
 int Color::distance_squared(Color other)
 {

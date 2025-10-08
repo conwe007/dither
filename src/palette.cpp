@@ -80,7 +80,7 @@ void Palette::sort()
     {
         for(size_t index_secondary = index_primary + 1; index_secondary < colors_size; index_secondary++)
         {
-            if(colors_srgb[index_secondary] < colors_srgb[index_primary])
+            if(colors_srgb[index_secondary].get_lightness() < colors_srgb[index_primary].get_lightness())
             {
                 Color temp = colors_srgb[index_primary];
                 colors_srgb[index_primary] = colors_srgb[index_secondary];
@@ -157,6 +157,16 @@ size_t Palette::nearest_index_lower(Color color)
     }
 
     return index_nearest;
+}
+
+std::size_t Palette::nearest_index_lighter(Color color)
+{
+
+}
+
+std::size_t Palette::nearest_index_darker(Color color)
+{
+
 }
 
 // returns the average distance between colors in the palette as a scalar

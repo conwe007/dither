@@ -30,6 +30,8 @@ public:
     Color nearest(Color color);
     Color nearest_grayscale(Color color);
     size_t nearest_index_lower(Color color);
+    std::size_t nearest_index_lighter(Color color);
+    std::size_t nearest_index_darker(Color color);
     size_t pitch_scalar();
     Color pitch_vector();
 

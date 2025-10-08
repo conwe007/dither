@@ -21,6 +21,7 @@ public:
     Color get_pixel(unsigned int x, unsigned int y, std::size_t frame = 0);
     void set_pixel(Color color, unsigned int x, unsigned int y, std::size_t frame = 0);
     double get_gamma();
+    std::size_t get_frames();
     void create_from_matrix(std::vector<std::vector<int>> matrix);
     std::vector<std::vector<int>> get_matrix_from_image();
     void to_linear();

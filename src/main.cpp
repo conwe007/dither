@@ -30,6 +30,9 @@ std::string ordered_all(std::string file_name, Palette palette, bool gamma_corre
 std::string convolution(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, bool gamma_correction, bool benchmark);
 std::string convolution_all(std::string file_name, EdgeHandling edge_handling, bool gamma_correction, bool benchmark);
 
+std::string temporal(std::string file_name, std::string method, Palette palette, std::size_t frames, bool gamma_correction, bool benchmark);
+std::string temporal_all(std::string file_name, std::string method, Palette palette, bool gamma_correction, bool benchmark);
+
 std::string convolve_dither(std::string file_name, Kernel kernel_type, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool gamma_correction, bool alternate, bool fourier, bool benchmark);
 std::string convolve_dither_all(std::string file_name, EdgeHandling edge_handling, Palette palette, ErrorDiffusionAlgorithm algorithm, bool gamma_correction, bool alternate, bool fourier, bool benchmark);
 
@@ -60,15 +63,16 @@ int main(int argc, const char* argv[])
     size_t kernel_size = 3;
     double sigma_brown_noise = 1.0;
     
-    std::cout << generate_bayer_all(output_levels, true, true) << std::endl;
-    std::cout << generate_blue_noise_all(sigma_blue_noise, output_levels, true, true) << std::endl;
-    std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
-    std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
+    // std::cout << generate_bayer_all(output_levels, true, true) << std::endl;
+    // std::cout << generate_blue_noise_all(sigma_blue_noise, output_levels, true, true) << std::endl;
+    // std::cout << generate_brown_noise_all(leaky_integrator, kernel_size, sigma_brown_noise, output_levels, true, true) << std::endl;
+    // std::cout << generate_white_noise_all(output_levels, true, true) << std::endl;
 
-    std::cout << error_diffusion_all("golden_gate", palette_black_white, true, true) << std::endl;
-    std::cout << ordered_all("golden_gate", palette_black_white, true, true) << std::endl;
-    std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true, true) << std::endl;
-    std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_black_white, ErrorDiffusionAlgorithm::ATKINSON, true, false, true, true) << std::endl;
+    // std::cout << error_diffusion_all("golden_gate", palette_black_white, true, true) << std::endl;
+    // std::cout << ordered_all("golden_gate", palette_black_white, true, true) << std::endl;
+    // std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true, true) << std::endl;
+    // std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_black_white, ErrorDiffusionAlgorithm::ATKINSON, true, false, true, true) << std::endl;
+    std::cout << temporal_all("golden_gate", "RANDOM", palette_twilight5, true, true);
 
     std::cout << "finished" << std::endl;
     return 0;
@@ -292,6 +296,51 @@ std::string convolution_all(std::string file_name, EdgeHandling edge_handling, b
     output += convolution(file_name, Kernel::GAUSSIAN_BLUR, edge_handling, gamma_correction, benchmark);
     output += convolution(file_name, Kernel::UNSHARP_MASK, edge_handling, gamma_correction, benchmark);
     
+    return output;
+}
+
+std::string temporal(std::string file_name, std::string method, Palette palette, std::size_t frames, bool gamma_correction, bool benchmark)
+{
+    std::string output = "";
+    Benchmark bm = Benchmark();
+    std::string file_path_input = "input\\" + file_name + ".png";
+    std::string file_path_output = "output\\temporal\\" + file_name;
+    std::string file_path_suffix = "";
+    Dither dither = Dither(frames, gamma_correction);
+
+    dither.set_palette(palette);
+    dither.load(file_path_input.c_str());
+
+    if(benchmark)
+    {
+        char heading[100];
+        sprintf(heading, "frames[%llu] time: ", frames);
+        output += heading;
+        bm.start();
+    }
+
+    dither.temporal(method);
+
+    if(benchmark)
+    {
+        bm.stop();
+        output += std::to_string(bm.time_us()) + " us\n";;
+    }
+
+    dither.save((file_path_output + "_" + std::to_string(frames) + ".gif").c_str());
+
+    return output;
+}
+
+std::string temporal_all(std::string file_name, std::string method, Palette palette, bool gamma_correction, bool benchmark)
+{
+    std::string output = "Temporal:\n";
+
+    output += temporal(file_name, method, palette, 2, gamma_correction, benchmark);
+    output += temporal(file_name, method, palette, 4, gamma_correction, benchmark);
+    output += temporal(file_name, method, palette, 8, gamma_correction, benchmark);
+    output += temporal(file_name, method, palette, 16, gamma_correction, benchmark);
+
     return output;
 }
 
