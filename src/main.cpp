@@ -72,7 +72,7 @@ int main(int argc, const char* argv[])
     // std::cout << ordered_all("golden_gate", palette_black_white, true, true) << std::endl;
     // std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true, true) << std::endl;
     // std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_black_white, ErrorDiffusionAlgorithm::ATKINSON, true, false, true, true) << std::endl;
-    std::cout << temporal_all("golden_gate", "RANDOM", palette_twilight5, true, true);
+    std::cout << temporal_all("sphere", "RANDOM", palette_twilight5, true, true);
 
     std::cout << "finished" << std::endl;
     return 0;

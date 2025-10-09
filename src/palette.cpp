@@ -161,7 +161,11 @@ size_t Palette::nearest_index_lower(Color color)
 
 std::size_t Palette::nearest_index_lighter(Color color)
 {
+    std::size_t palette_index = -1;
 
+
+
+    return palette_index;
 }
 
 std::size_t Palette::nearest_index_darker(Color color)

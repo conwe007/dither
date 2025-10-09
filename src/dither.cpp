@@ -437,31 +437,76 @@ void Dither::temporal_pwm()
     std::size_t palette_size = palette.size();
     Color color;
     double lightness;
+    bool is_next_pixel_light;
+    double accumulator_dark;
+    double accumulator_light;
+    std::size_t index_darker;
+    std::size_t index_lighter;
+    double frame_increment = 1.0 / static_cast<double>(image_frames);
+    Color palette_color_darker;
+    Color palette_color_lighter;
+    double distance_dark;
+    double distance_light;
+    double proportion_dark;
+    double proportion_light;
 
     for(std::size_t y = 0; y < image_height; y++)
     {
         for(std::size_t x = 0; x < image_width; x++)
         {
-            // calculate the pixel's similarity to each color in the palette
+            // calculate the pixel's similarity to the two nearest colors in the palette
             color = image.get_pixel(x, y);
             lightness = color.get_lightness();
-            std::vector<double> weights;
+            is_next_pixel_light = true;
+            accumulator_dark = 0.0;
+            accumulator_light = 0.0;
+            index_darker = palette.nearest_index_darker(color);
+            index_lighter = palette.nearest_index_lighter(color);
+
+            if(index_darker >= 0)
+            {
+                palette_color_darker = palette.get_color_at(index_darker);
+                distance_dark = color.distance(palette_color_darker);
+                proportion_dark = distance_dark / (distance_dark + distance_light);
+            }
+
+            if(index_lighter >= 1)
+            {
+                palette_color_lighter = palette.get_color_at(index_lighter);
+                distance_light = color.distance(palette_color_lighter);
+                proportion_light = distance_light / (distance_dark + distance_light);
+            }
 
             if(gamma_correction)
             {
                 color.to_linear(image.get_gamma());
             }
 
-            for(std::size_t index_palette = 0; index_palette < palette_size; index_palette++)
-            {
-                weights.push_back(1.0 / color.distance(palette.get_color_at(index_palette)));
-            }
-
-            std::discrete_distribution<> dis(weights.begin(), weights.end());
-
             for(std::size_t index_frame = 0; index_frame < image_frames; index_frame++)
             {
-                // image.set_pixel(palette_color, x, y, index_frame);
+                if(is_next_pixel_light)
+                {
+                    image.set_pixel(palette_color_lighter, x, y, index_frame);
+                    accumulator_light += frame_increment;
+
+                    if(accumulator_light > proportion_light)
+                    {
+                        is_next_pixel_light = false;
+                        accumulator_light = 0.0;
+                    }
+                }
+                // next pixel is dark
+                else
+                {
+                    image.set_pixel(palette_color_darker, x, y, index_frame);
+                    accumulator_dark += frame_increment;
+
+                    if(accumulator_dark > proportion_dark)
+                    {
+                        is_next_pixel_light = true;
+                        accumulator_dark = 0.0;
+                    }
+                }
             }
             
         }
