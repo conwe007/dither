@@ -56,6 +56,7 @@ int main(int argc, const char* argv[])
     Palette palette_titanstone = Palette("TITANSTONE", Palette::preset_palettes.at(PresetPalette::TITANSTONE), gamma);
     Palette palette_2bit_demichrome = Palette("_2BIT_DEMICHROME", Palette::preset_palettes.at(PresetPalette::_2BIT_DEMICHROME), gamma);
     Palette palette_twilight5 = Palette("TWILIGHT5", Palette::preset_palettes.at(PresetPalette::TWILIGHT5), gamma);
+    Palette palette_slso8 = Palette("SLSO8", Palette::SLSO8, gamma);
 
     int output_levels = Color::CHANNEL_MAX + 1;
     double sigma_blue_noise = 1.9;
@@ -72,7 +73,7 @@ int main(int argc, const char* argv[])
     // std::cout << ordered_all("golden_gate", palette_black_white, true, true) << std::endl;
     // std::cout << convolution_all("golden_gate", EdgeHandling::EXTEND, true, true) << std::endl;
     // std::cout << convolve_dither_all("golden_gate", EdgeHandling::EXTEND, palette_black_white, ErrorDiffusionAlgorithm::ATKINSON, true, false, true, true) << std::endl;
-    std::cout << temporal_all("sphere", "RANDOM", palette_twilight5, true, true);
+    std::cout << temporal_all("forest", "PWM", palette_1bit_monitor_glow, false, true);
 
     std::cout << "finished" << std::endl;
     return 0;
@@ -340,6 +341,8 @@ std::string temporal_all(std::string file_name, std::string method, Palette pale
     output += temporal(file_name, method, palette, 4, gamma_correction, benchmark);
     output += temporal(file_name, method, palette, 8, gamma_correction, benchmark);
     output += temporal(file_name, method, palette, 16, gamma_correction, benchmark);
+    output += temporal(file_name, method, palette, 32, gamma_correction, benchmark);
+    output += temporal(file_name, method, palette, 64, gamma_correction, benchmark);
 
     return output;
 }

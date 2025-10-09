@@ -413,7 +413,7 @@ void Dither::temporal_random()
 
             for(std::size_t index_palette = 0; index_palette < palette_size; index_palette++)
             {
-                weights.push_back(1.0 / color.distance(palette.get_color_at(index_palette)));
+                weights.push_back(1.0 / color.distance_squared(palette.get_color_at(index_palette)));
             }
 
             std::discrete_distribution<> dis(weights.begin(), weights.end());
@@ -431,17 +431,89 @@ void Dither::temporal_random()
 
 void Dither::temporal_pwm()
 {
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<> dis(0.0, 1.0);
     std::size_t image_height = image.get_height();
     std::size_t image_width = image.get_width();
     std::size_t image_frames = image.get_frames();
-    std::size_t palette_size = palette.size();
+
+    palette.sort();
+
+    for(std::size_t y = 0; y < image_height; y++)
+    {
+        for(std::size_t x = 0; x < image_width; x++)
+        {
+            // calculate the pixel's similarity to the two nearest colors in the palette
+            Color color = image.get_pixel(x, y);
+
+            if(gamma_correction)
+            {
+                color.to_linear(image.get_gamma());
+            }
+
+            int index_darker = palette.nearest_index_darker(color);
+            int index_lighter = palette.nearest_index_lighter(color);
+            Color palette_color_darker;
+            Color palette_color_lighter;
+            double duty_cycle = 0.0; // the proportion of the time that the pixel is set to nearest lighter palette color
+
+            // no darker colors on the palette, so set duty cycle to 0%
+            if(index_darker < 0)
+            {
+                palette_color_darker = palette.get_color_at(0);
+                duty_cycle = 0.0;
+            }
+            // no lighter colors on th epalette, so set duty cycle to 100%
+            else if(index_lighter < 0)
+            {
+                palette_color_lighter = palette.get_color_at(palette.size() - 1);
+                duty_cycle = 1.0;
+            }
+            else
+            {
+                palette_color_darker = palette.get_color_at(index_darker);
+                palette_color_lighter = palette.get_color_at(index_lighter);
+                double distance_darker = color.distance(palette_color_darker);
+                double distance_lighter = color.distance(palette_color_lighter);
+                duty_cycle = distance_darker / (distance_darker + distance_lighter);
+                if(std::abs(index_lighter - index_darker) > 1)
+                {
+                    std::cout << y << " " << x << " - " << index_darker << " " << index_lighter << std::endl;
+                    
+                }
+            }
+
+            for(std::size_t index_frame = 0; index_frame < image_frames; index_frame++)
+            {
+                if(dis(mt) < duty_cycle)
+                {
+                    image.set_pixel(palette_color_lighter, x, y, index_frame);
+                }
+                else
+                {
+                    image.set_pixel(palette_color_darker, x, y, index_frame);
+                }
+            }
+        }
+    }
+
+    return;
+}
+
+void Dither::temporal_pwm2()
+{
+    std::size_t image_height = image.get_height();
+    std::size_t image_width = image.get_width();
+    std::size_t image_frames = image.get_frames();
     Color color;
-    double lightness;
     bool is_next_pixel_light;
+    bool has_dark_component;
+    bool has_light_component;
     double accumulator_dark;
     double accumulator_light;
-    std::size_t index_darker;
-    std::size_t index_lighter;
+    int index_darker;
+    int index_lighter;
     double frame_increment = 1.0 / static_cast<double>(image_frames);
     Color palette_color_darker;
     Color palette_color_lighter;
@@ -456,25 +528,35 @@ void Dither::temporal_pwm()
         {
             // calculate the pixel's similarity to the two nearest colors in the palette
             color = image.get_pixel(x, y);
-            lightness = color.get_lightness();
             is_next_pixel_light = true;
             accumulator_dark = 0.0;
             accumulator_light = 0.0;
             index_darker = palette.nearest_index_darker(color);
             index_lighter = palette.nearest_index_lighter(color);
+            // std::cout << y << " " << x << " " << index_darker << " " << index_lighter << std::endl;
 
             if(index_darker >= 0)
             {
                 palette_color_darker = palette.get_color_at(index_darker);
                 distance_dark = color.distance(palette_color_darker);
                 proportion_dark = distance_dark / (distance_dark + distance_light);
+                has_dark_component = true;
+            }
+            else
+            {
+                has_dark_component = false;
             }
 
-            if(index_lighter >= 1)
+            if(index_lighter >= 0)
             {
                 palette_color_lighter = palette.get_color_at(index_lighter);
                 distance_light = color.distance(palette_color_lighter);
                 proportion_light = distance_light / (distance_dark + distance_light);
+                has_light_component = true;
+            }
+            else
+            {
+                has_light_component = false;
             }
 
             if(gamma_correction)
@@ -484,12 +566,12 @@ void Dither::temporal_pwm()
 
             for(std::size_t index_frame = 0; index_frame < image_frames; index_frame++)
             {
-                if(is_next_pixel_light)
+                if(is_next_pixel_light && has_light_component)
                 {
                     image.set_pixel(palette_color_lighter, x, y, index_frame);
                     accumulator_light += frame_increment;
 
-                    if(accumulator_light > proportion_light)
+                    if(accumulator_light > proportion_light && has_dark_component)
                     {
                         is_next_pixel_light = false;
                         accumulator_light = 0.0;
@@ -501,7 +583,7 @@ void Dither::temporal_pwm()
                     image.set_pixel(palette_color_darker, x, y, index_frame);
                     accumulator_dark += frame_increment;
 
-                    if(accumulator_dark > proportion_dark)
+                    if(accumulator_dark > proportion_dark && has_light_component)
                     {
                         is_next_pixel_light = true;
                         accumulator_dark = 0.0;

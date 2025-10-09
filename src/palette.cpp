@@ -6,7 +6,8 @@ const std::unordered_map<PresetPalette, std::vector<Color>> Palette::preset_pale
     {PresetPalette::_1BIT_MONITOR_GLOW, Palette::_1BIT_MONITOR_GLOW},
     {PresetPalette::TITANSTONE, Palette::TITANSTONE},
     {PresetPalette::_2BIT_DEMICHROME, Palette::_2BIT_DEMICHROME},
-    {PresetPalette::TWILIGHT5, Palette::TWILIGHT5}
+    {PresetPalette::TWILIGHT5, Palette::TWILIGHT5},
+    {PresetPalette::SLSO8, Palette::SLSO8}
 };
 
 // initializes an empty palette
@@ -159,18 +160,52 @@ size_t Palette::nearest_index_lower(Color color)
     return index_nearest;
 }
 
-std::size_t Palette::nearest_index_lighter(Color color)
+// returns the index of the palette color closest to the color and lighter. Assumes palette is sorted darkest -> lightest
+int Palette::nearest_index_lighter(Color color)
 {
-    std::size_t palette_index = -1;
+    double lightness = color.get_lightness();
 
+    // none of the colors in the palette are lighter, so return error value
+    if(colors_srgb[colors_srgb.size() - 1].get_lightness() <= lightness)
+    {
+        return -1;
+    }
 
+    for(int index_palette = colors_srgb.size() - 2; index_palette >= 0; index_palette--)
+    {
+        // found the first darker color, so the next lighter color on the palette must be the nearest lighter palette color
+        if(colors_srgb[index_palette].get_lightness() < lightness)
+        {
+            return index_palette + 1;
+        }
+    }
 
-    return palette_index;
+    // no lighter colors found, so the nearest lighter color must be the last palette color
+    return colors_srgb.size() - 1;
 }
 
-std::size_t Palette::nearest_index_darker(Color color)
+// returns the index of the palette color closest to the color and darker. Assumes palette is sorted darkest -> lightest
+int Palette::nearest_index_darker(Color color)
 {
+    double lightness = color.get_lightness();
 
+    // none of the colors in the palette are darker, so return error value
+    if(colors_srgb[0].get_lightness() >= lightness)
+    {
+        return -1;
+    }
+
+    for(int index_palette = 1; index_palette < static_cast<int>(colors_srgb.size()); index_palette++)
+    {
+        // found the first lighter color, so the next darker color on the palette must be the nearest darker palette color
+        if(colors_srgb[index_palette].get_lightness() > lightness)
+        {
+            return index_palette - 1;
+        }
+    }
+
+    // no darker colors found, so the nearest darker color must be the first palette color
+    return 0;
 }
 
 // returns the average distance between colors in the palette as a scalar

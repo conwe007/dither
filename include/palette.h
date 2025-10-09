@@ -4,6 +4,7 @@
 #include "color.h" // Color structure
 #include <climits> // INT_MAX
 #include <cmath> // std::abs()
+#include <iostream>
 #include <string> // std::string
 #include <unordered_map> // std::unordered_map
 #include <vector> // std::vector
@@ -14,7 +15,8 @@ enum PresetPalette
     _1BIT_MONITOR_GLOW,
     TITANSTONE,
     _2BIT_DEMICHROME,
-    TWILIGHT5
+    TWILIGHT5,
+    SLSO8
 };
 
 class Palette
@@ -30,8 +32,8 @@ public:
     Color nearest(Color color);
     Color nearest_grayscale(Color color);
     size_t nearest_index_lower(Color color);
-    std::size_t nearest_index_lighter(Color color);
-    std::size_t nearest_index_darker(Color color);
+    int nearest_index_lighter(Color color);
+    int nearest_index_darker(Color color);
     size_t pitch_scalar();
     Color pitch_vector();
 
@@ -42,7 +44,7 @@ public:
     static inline const std::vector<Color> TITANSTONE = {Color(0x150413ff), Color(0x635c6dff), Color(0xffffd1ff)};
     static inline const std::vector<Color> _2BIT_DEMICHROME = {Color(0x211e20ff), Color(0x555568ff), Color(0xa0a08bff), Color(0xe9efecff)};
     static inline const std::vector<Color> TWILIGHT5 = {Color(0x292831ff), Color(0x333f58ff), Color(0x4a7a96ff), Color(0xee8695ff), Color(0xfbbbadff)};
-
+    static inline const std::vector<Color> SLSO8 = {Color(0x0d2b45ff), Color(0x203c56ff), Color(0x544e68ff), Color(0x8d697aff), Color(0xd08159ff), Color(0xffaa5eff), Color(0xffd4a3ff), Color(0xffecd6ff)};
     static const std::unordered_map<PresetPalette, std::vector<Color>> preset_palettes;
 
 private:

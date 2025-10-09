@@ -34,6 +34,7 @@ private:
     void error_diffusion_alternate(ErrorDiffusionAlgorithm algorithm);
     void temporal_random();
     void temporal_pwm();
+    void temporal_pwm2();
     std::vector<std::vector<double>> normalize_threshold_matrix(std::vector<std::vector<int>> threshold_matrix);
     std::vector<std::vector<int>> scale_threshold_matrix(std::vector<std::vector<int>> threshold_matrix, int min, int max);
 };
